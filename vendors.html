@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BSP Store — 개발사</title>
+<style>
+  :root{--blue:#3080ff;--blue-soft:#54a2ff;--orange:#fe6e00;--ink:#050505;--panel:#0d0f13;--panel2:#141821;
+        --line:#222834;--text:#e8ecf3;--muted:#9aa4b5;--ok:#22c55e;
+        --font:"Pretendard","Noto Sans KR",system-ui,sans-serif;--mono:ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--font)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+  header{position:sticky;top:0;z-index:20;background:rgba(5,5,5,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;gap:28px;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em}
+  .logo .mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--orange));display:grid;place-items:center;font-size:13px;color:#fff}
+  .logo small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em}
+  .nav nav{display:flex;gap:22px;margin-left:auto;font-size:14px;color:var(--muted)}
+  .nav nav a:hover{color:#fff}
+  .hero{padding:64px 0 40px;border-bottom:1px solid var(--line);
+        background:radial-gradient(800px 360px at 20% -10%,rgba(48,128,255,.18),transparent 60%),
+                   radial-gradient(600px 320px at 85% 0%,rgba(254,110,0,.12),transparent 60%)}
+  h1{font-size:clamp(26px,4vw,40px);margin:0 0 12px;letter-spacing:-.03em}
+  h1 em{font-style:normal;color:var(--orange)}
+  .lead{color:var(--muted);font-size:16px;line-height:1.7;max-width:620px;margin:0}
+  section{padding:56px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+  .vendor{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .vhead{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .vmark{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:17px;font-weight:800;
+         background:linear-gradient(135deg,rgba(48,128,255,.3),rgba(254,110,0,.25));border:1px solid var(--line)}
+  .vendor h3{margin:0;font-size:18px;letter-spacing:-.01em}
+  .vendor .cnt{font-size:12px;color:var(--muted);margin-top:2px}
+  .vendor p.desc{color:var(--muted);font-size:13.5px;line-height:1.7;margin:10px 0 16px}
+  .applist{display:flex;flex-direction:column;gap:8px}
+  .app{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);
+       border-radius:10px;padding:10px 12px;font-size:13.5px}
+  .app b{font-weight:600}
+  .app span{color:var(--muted);font-size:12px;margin-left:auto;font-family:var(--mono)}
+  .join{background:linear-gradient(135deg,rgba(48,128,255,.12),rgba(254,110,0,.08));
+        border:1px solid var(--line);border-radius:16px;padding:28px}
+  .join h2{margin:0 0 10px;font-size:20px;letter-spacing:-.02em}
+  .join p{color:var(--muted);font-size:14px;line-height:1.75;margin:0 0 18px;max-width:640px}
+  .free{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:18px}
+  .free div{background:rgba(5,5,5,.4);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .free b{display:block;font-size:13.5px;margin-bottom:6px}
+  .free span{color:var(--muted);font-size:12.5px;line-height:1.6}
+  footer{border-top:1px solid var(--line);padding:34px 0 60px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="mark">B</span><span>BSP Store<small>DIRECT BIM TO SHOP</small></span></div>
+    <nav>
+      <a href="/">앱</a>
+      <a href="/vendors.html">개발사</a>
+      <a href="/#how">설치</a>
+      <a href="/policy.md">정책</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>만든 사람이 <em>직접</em> 올립니다.</h1>
+    <p class="lead">플랫폼은 우리가 답니다. 설치·업데이트·집계는 런처가 알아서 하니,
+      개발사는 만든 것을 올리기만 하면 됩니다. 심사도, 수수료도 없습니다.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="grid" id="vendors"></div>
+  </div>
+</section>
+
+<section style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <div class="join">
+      <h2>개발사로 들어오기</h2>
+      <p>관리자에게 개발자 계정을 요청하면 토큰이 박힌 안내서(MD) 한 장을 받습니다.
+         빌드 뒤 한 줄이면 올라가고, 올린 즉시 모든 런처와 리빗 스토어에 뜹니다.</p>
+      <div class="free">
+        <div><b>플랫폼 · 무료</b><span>런처·설치·업데이트·CDN 을 그대로 씁니다. 붙이는 비용이 없습니다.</span></div>
+        <div><b>호스트 설치 자동</b><span>리빗은 버전마다 Addins 로, 캐드는 ApplicationPlugins 로 알아서 들어갑니다.</span></div>
+        <div><b>사용량 집계</b><span>몇 번 받아 갔고 몇 번 돌았는지 숫자로 봅니다.</span></div>
+        <div><b>판올림 한 줄</b><span>같은 id 로 버전만 올리면 끝. 쓰던 사람은 다음 설치에서 새 판을 받습니다.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">BSP Engineering · Direct BIM to SHOP<br>
+    <span style="font-family:var(--mono)">개발사 문의 : 설계자동화팀</span></div>
+</footer>
+
+<script>
+const INTRO = {
+  "BSP Engineering": "배관·BIM 설계 자동화를 만듭니다. 도면에서 제작도까지 한 번에 갑니다.",
+  "DamDam": "맛보기로 올려 본 애드인들입니다."
+};
+fetch("/api/apps",{cache:"no-store"}).then(r=>r.json()).then(m=>{
+  const by = {};
+  (m.apps||[]).forEach(a=>{ const p=a.publisher||"기타"; (by[p]=by[p]||[]).push(a); });
+  document.getElementById("vendors").innerHTML = Object.entries(by).map(([pub,apps])=>`
+    <div class="vendor">
+      <div class="vhead">
+        <div class="vmark">${pub.slice(0,1)}</div>
+        <div><h3>${pub}</h3><div class="cnt">앱 ${apps.length}개 · 배포중 ${apps.filter(a=>a.status==="live").length}개</div></div>
+      </div>
+      <p class="desc">${INTRO[pub]||"이 개발사의 소개는 아직 없습니다."}</p>
+      <div class="applist">${apps.map(a=>`
+        <div class="app"><b>${a.name}</b>
+          <span>${a.host==="revit"?"리빗":a.host==="autocad"?"캐드":"윈도우"} · ${a.status==="live"?("v"+a.version):"준비중"}</span>
+        </div>`).join("")}</div>
+    </div>`).join("");
+});
+</script>
+</body>
+</html>

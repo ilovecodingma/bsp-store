@@ -13,7 +13,8 @@ const { readFile, writeFile, enabled } = require("./_store");
 const { makeKey, adminAuth } = require("./_lib");
 
 const PATH = "data/users.json";
-const ROLES = new Set(["admin", "publisher", "user"]);
+const ROLES = new Set(["super", "admin", "publisher", "user"]);
+const RANK = { super: 3, admin: 2, publisher: 1, user: 0 };
 
 async function load() {
   const f = await readFile(PATH);
@@ -46,6 +47,10 @@ module.exports = async (req, res) => {
     const name = String(body.name || "").trim();
     const org = String(body.org || "").trim();
     const role = ROLES.has(String(body.role)) ? String(body.role) : "user";
+    // super·admin 은 super 만 만들 수 있다 (대표님 토큰)
+    if (RANK[role] >= 2 && who.rank < 3) {
+      res.status(403).json({ ok: false, reason: "관리자·최고관리자 계정은 대표 토큰으로만 만듭니다" }); return;
+    }
     const seats = Number(body.seats) || 1;
     const expires = String(body.expires || "").trim();
 
@@ -58,6 +63,7 @@ module.exports = async (req, res) => {
 
     const user = {
       uid, name, org, role, seats, expires, key,
+      apps: Array.isArray(body.apps) ? body.apps.slice(0, 20) : [],   // 이 개발자가 올릴 수 있는 앱 id
       status: "active",
       note: String(body.note || "").slice(0, 120),
       created: new Date().toISOString().slice(0, 10),

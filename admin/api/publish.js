@@ -15,6 +15,7 @@
 
 const crypto = require("crypto");
 const { readFile, writeFile, enabled } = require("./_store");
+const { verifyKey } = require("./_lib");
 
 const TOKEN = process.env.PUBLISHER_TOKEN || "";
 const HOSTS = new Set(["autocad", "revit", "windows"]);
@@ -23,8 +24,28 @@ const KINDS = new Set(["msi", "bundle", "addin"]);
 module.exports = async (req, res) => {
   res.setHeader("cache-control", "no-store");
   if (req.method !== "POST") { res.status(405).json({ ok: false, reason: "POST" }); return; }
-  if (!TOKEN || req.headers["x-publisher-token"] !== TOKEN) {
-    res.status(401).json({ ok: false, reason: "판매자 토큰이 필요합니다" }); return;
+  // 개발자 토큰 : 계정 키(publisher/admin) 또는 공용 토큰
+  //   헤더 x-bsp-key: BSP.xxx.yyy   (사람마다 다른 토큰 — 이쪽을 쓴다)
+  //   헤더 x-publisher-token: <PUBLISHER_TOKEN>  (공용 — 급할 때만)
+  let byName = "", devUid = "", devRole = "", devApps = [];
+  const devKey = String(req.headers["x-bsp-key"] || "").trim();
+  if (devKey) {
+    if (!verifyKey(devKey).ok) { res.status(401).json({ ok: false, reason: "토큰 서명이 맞지 않습니다" }); return; }
+    try {
+      const f = await readFile("data/users.json");
+      const list = f && f.text ? JSON.parse(f.text) : [];
+      const u = (Array.isArray(list) ? list : []).find((x) => x.key === devKey);
+      if (!u) { res.status(401).json({ ok: false, reason: "없는 개발자" }); return; }
+      if (u.status === "revoked") { res.status(401).json({ ok: false, reason: "끊긴 계정" }); return; }
+      if (u.role !== "publisher" && u.role !== "admin") { res.status(401).json({ ok: false, reason: "개발자 권한이 아닙니다" }); return; }
+      if (new Date(u.expires) < new Date()) { res.status(401).json({ ok: false, reason: "만료된 토큰" }); return; }
+      byName = u.org || u.name;
+      devUid = u.uid;
+      devApps = Array.isArray(u.apps) ? u.apps : [];
+      devRole = u.role;
+    } catch (e) { res.status(401).json({ ok: false, reason: "확인 실패" }); return; }
+  } else if (!TOKEN || req.headers["x-publisher-token"] !== TOKEN) {
+    res.status(401).json({ ok: false, reason: "개발자 토큰이 필요합니다 (x-bsp-key)" }); return;
   }
   if (!enabled()) { res.status(200).json({ ok: false, reason: "저장소(GH_TOKEN/GH_REPO)가 연결돼 있지 않습니다" }); return; }
 
@@ -42,6 +63,29 @@ module.exports = async (req, res) => {
   if (!HOSTS.has(host)) { res.status(200).json({ ok: false, reason: "host 는 autocad/revit/windows" }); return; }
   if (!KINDS.has(kind)) { res.status(200).json({ ok: false, reason: "kind 는 msi/bundle/addin" }); return; }
   if (!version) { res.status(200).json({ ok: false, reason: "버전이 필요합니다" }); return; }
+
+  // 남의 앱은 못 건드린다.  처음 올린 사람이 그 id 의 주인이 된다.
+  if (devUid && devRole !== "admin" && devRole !== "super") {
+    let owner = null;
+    try {
+      const cur0 = await readFile("data/published.json");
+      if (cur0 && cur0.text) {
+        const j0 = JSON.parse(cur0.text);
+        const l0 = Array.isArray(j0) ? j0 : (j0.apps || []);
+        owner = l0.find((x) => x.id === id) || null;
+      }
+    } catch {}
+    if (owner && owner.ownerUid && owner.ownerUid !== devUid) {
+      res.status(403).json({ ok: false, reason: "다른 개발자의 앱입니다" }); return;
+    }
+    if (devApps.length > 0 && !devApps.includes(id)) {
+      res.status(403).json({ ok: false, reason: `이 토큰으로는 ${devApps.join(", ")} 만 올릴 수 있습니다` }); return;
+    }
+    // 기본 목록(우리 것)과 같은 id 는 못 쓴다
+    if (["hts", "revit-store", "noz-pipeline"].includes(id)) {
+      res.status(403).json({ ok: false, reason: "그 id 는 내부 전용입니다" }); return;
+    }
+  }
 
   let filePath = String(b.fileUrl || "");
   let size = Number(b.size) || 0;
@@ -71,13 +115,15 @@ module.exports = async (req, res) => {
     size, sha256: sha,
     download: `/api/download?id=${id}&v=${encodeURIComponent(version)}`,
     file: filePath,
-    publisher: String(b.publisher || "").slice(0, 60),
+    publisher: byName || String(b.publisher || "").slice(0, 60),
+    ownerUid: devUid || (owner0 && owner0.ownerUid) || "",
   };
 
   // 목록 갱신 (같은 id 는 덮어쓴다)
-  let list = [];
+  let list = [], owner0 = null;
   const cur = await readFile("data/published.json");
   if (cur && cur.text) { try { const j = JSON.parse(cur.text); list = Array.isArray(j) ? j : (j.apps || []); } catch {} }
+  owner0 = list.find((x) => x.id === id) || null;
   list = list.filter((x) => x.id !== id);
   list.push(app);
 

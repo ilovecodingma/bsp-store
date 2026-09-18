@@ -9,12 +9,6 @@ const { readFile, enabled } = require("./_store");
 module.exports = async (req, res) => {
   res.setHeader("cache-control", "no-store");
 
-  let lic = process.env.LICENSE_MODE === "on" ? "on" : "off";
-  try {
-    const c = await readFile("data/config.json");
-    if (c && c.text) { const j = JSON.parse(c.text); if (j.license === "on" || j.license === "off") lic = j.license; }
-  } catch {}
-
   let extra = [];
   let store = enabled() ? "github" : "off";
   try {
@@ -37,7 +31,6 @@ module.exports = async (req, res) => {
     cdn: base.cdn || "",
     launcher: base.launcher || {},
     store,
-    license: lic,
     apps: Array.from(byId.values()),
   });
 };

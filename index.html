@@ -109,15 +109,16 @@
       <a href="#apps">앱</a>
       <a href="#how">설치</a>
       <a href="#license">라이선스</a>
-      <a href="/publish.html">판매자</a>
-      <a href="/stats.html">집계</a>
+      <a href="/vendors.html">개발사</a>
+      <a href="/policy.md">정책</a>
+      <a href="#changes">변경내역</a>
     </nav>
   </div>
 </header>
 
 <div class="hero">
   <div class="wrap">
-    <span class="tag">● 사내 배포 · v7.8.3</span>
+    <span class="tag">● 사내 배포 모드 · 라이선스 없음</span>
     <h1>런처 하나로<br>현장 도구를 <em>바로</em> 깝니다.</h1>
     <p class="lead">
       BSP 런처가 라이선스를 확인하고 CDN에서 최신판을 받아 설치합니다.
@@ -168,31 +169,26 @@
     </div>
     <p class="hero-note" style="margin-top:22px">
       길은 하나입니다 — <code>플랫폼(스토어)</code> → <code>런처(가운데 라우터 · 라이선스 · 기록)</code> → <code>앱</code>.
-      라이선스는 관리자가 <a href="/admin.html" style="color:var(--blue-soft)">발급 페이지</a>에서 만들어 줍니다.
+      라이선스 키는 관리자에게 받습니다 (발급 페이지는 사내 관리자 주소에 따로 있습니다).
     </p>
   </div>
 </section>
 
 <section id="license" style="border-top:1px solid var(--line)">
   <div class="wrap">
-    <div class="sec-head"><div><h2>라이선스</h2><p>키 한 개 = PC 한 대. 여기서 바로 확인해 볼 수 있습니다.</p></div></div>
+    <div class="sec-head"><div><h2>라이선스</h2><p>지금은 사내 배포 모드입니다 — 시리얼 없이 씁니다.</p></div></div>
     <div class="lic">
       <div class="lic-box">
-        <label for="key">라이선스 키</label>
-        <div class="lic-row">
-          <input id="key" type="text" placeholder="BSP-XXXX-XXXX-XXXX" autocomplete="off" />
-          <button class="btn btn-orange" id="check">확인</button>
-        </div>
-        <div class="result" id="result"></div>
+        <p style="margin:0;color:var(--muted);font-size:14px;line-height:1.8">
+          <b style="color:var(--text)">지금</b><br>
+          사내에서 만든 것을 빨리 돌려 보는 것이 목적이라 라이선스를 꺼 뒀습니다.
+          런처를 받아 바로 설치하면 됩니다. 누가 무엇을 받아 갔는지는 그대로 집계됩니다.
+        </p>
       </div>
       <div class="lic-note">
-        <p><b style="color:var(--text)">지금 상태</b><br>
-        <code>/api/license</code> 가 키를 확인하고 만료일·좌석 수를 돌려줍니다.
-        지금은 키 목록이 서버 파일에 들어 있는 1단계 구현이고, 발급·회수·좌석 관리가 필요해지면
-        DB(예: Vercel KV / Postgres)로 옮기면 됩니다.</p>
-        <p><b style="color:var(--text)">런처가 하는 일</b><br>
-        키를 <code>/api/license</code> 로 보내고, 받은 토큰을 헤더에 실어 <code>/apps.json</code> 의
-        다운로드 주소를 받습니다. 설치본은 CDN에서 받고 SHA-256 을 맞춰 봅니다.</p>
+        <p><b style="color:var(--text)">나중에 (외부 배포로 갈 때)</b><br>
+        계약 → 시리얼 → 런처가 서버에서 라이선스를 받아 오는 길은 이미 만들어 두었습니다.
+        <code>LICENSE_MODE=on</code> 한 줄이면 켜집니다. 좌석 세기·갱신·반납·회수까지 그때 함께 켜집니다.</p>
       </div>
     </div>
   </div>
@@ -226,6 +222,14 @@
 <script>
 const fmt = b => b >= 1048576 ? (b/1048576).toFixed(1)+" MB" : Math.round(b/1024)+" KB";
 
+fetch("/api/config",{cache:"no-store"}).then(r=>r.json()).then(c=>{
+  if(c.notice){
+    const d=document.createElement("div");
+    d.style.cssText="background:rgba(254,110,0,.12);border-bottom:1px solid var(--line);padding:10px 20px;text-align:center;font-size:13.5px;color:var(--orange)";
+    d.textContent=c.notice; document.body.insertBefore(d, document.body.firstChild);
+  }
+}).catch(()=>{});
+
 fetch("/api/apps", {cache:"no-store"}).then(r=>r.json()).then(m=>{
   document.getElementById("manifest-stamp").textContent = "목록 " + m.updated + " · 저장소 " + (m.store||"-");
   document.getElementById("apps-grid").innerHTML = m.apps.map(a=>`
@@ -255,29 +259,6 @@ fetch("/api/apps", {cache:"no-store"}).then(r=>r.json()).then(m=>{
   document.getElementById("manifest-stamp").textContent = "manifest 못 읽음";
 });
 
-document.getElementById("check").onclick = async () => {
-  const el = document.getElementById("result");
-  const key = document.getElementById("key").value.trim();
-  if(!key){ el.className="result no"; el.textContent="키를 넣으세요."; return; }
-  el.className="result"; el.textContent="확인 중…";
-  try{
-    const r = await fetch("/api/license", {
-      method:"POST", headers:{"content-type":"application/json"},
-      body: JSON.stringify({key, machine:"web-check"})
-    });
-    const d = await r.json();
-    if(d.ok){
-      el.className="result ok";
-      el.textContent = `사용 가능\n회사   ${d.org}\n좌석   ${d.seats}\n만료   ${d.expires}`;
-    }else{
-      el.className="result no";
-      el.textContent = "사용할 수 없는 키 : " + (d.reason||"확인 실패");
-    }
-  }catch(e){
-    el.className="result no";
-    el.textContent = "라이선스 서버에 닿지 못했습니다 (로컬에서 연 경우 정상).";
-  }
-};
 </script>
 </body>
 </html>

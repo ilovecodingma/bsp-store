@@ -1,0 +1,38 @@
+# 깃에 올리면 버셀에 저절로 올라간다.
+#   master 에 push -> 스토어(루트) 와 관리자(admin/) 를 각각 운영 배포
+#   되돌리기 : git revert 하고 push 하면 그대로 이전 상태가 다시 올라간다
+#              (급하면 관리자 화면에서 [되돌리기] 로 버셀의 직전 배포를 즉시 올린다)
+
+name: deploy
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - "data/**"          # 기록·계정 파일이 바뀐 것으로는 배포하지 않는다
+      - "**/*.md"
+  workflow_dispatch:        # 손으로도 돌릴 수 있다
+
+jobs:
+  store:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 스토어 배포
+        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STORE }}
+
+  admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 관리자 배포
+        working-directory: admin
+        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}

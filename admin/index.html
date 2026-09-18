@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BSP 관리자 — 라이선스·판매자·집계</title>
+<style>
+  :root{--blue:#3080ff;--orange:#fe6e00;--ink:#050505;--panel:#0d0f13;--line:#222834;
+        --text:#e8ecf3;--muted:#9aa4b5;--ok:#22c55e;--warn:#fb2c36;
+        --mono:ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:48px 20px}
+  h1{font-size:22px;margin:0 0 6px;letter-spacing:-.02em}
+  h1 span{color:var(--blue)}
+  p.lead{color:var(--muted);font-size:14px;margin:0 0 28px}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}
+  label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px;letter-spacing:.04em}
+  label:first-child{margin-top:0}
+  input{width:100%;background:#07090d;border:1px solid var(--line);border-radius:10px;padding:11px 13px;
+        color:var(--text);font-family:var(--mono);font-size:14px}
+  input:focus{outline:none;border-color:var(--blue)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  button{margin-top:18px;border:0;border-radius:10px;padding:12px 20px;font-weight:700;font-size:14px;
+         cursor:pointer;font-family:inherit;background:var(--orange);color:#fff}
+  button:hover{background:#f05100}
+  .out{margin-top:18px;background:#07090d;border:1px dashed var(--line);border-radius:10px;padding:16px;
+       font-family:var(--mono);font-size:13px;color:var(--muted);word-break:break-all;white-space:pre-wrap;min-height:22px}
+  .out.ok{color:var(--ok);border-color:rgba(34,197,94,.4)}
+  .out.no{color:var(--warn);border-color:rgba(251,44,54,.4)}
+  .note{color:var(--muted);font-size:13px;line-height:1.75}
+  .note code{font-family:var(--mono);color:#54a2ff}
+  a{color:#54a2ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>BSP</span> 라이선스 · 계약</h1>
+  <p class="lead">토큰 하나로 들어옵니다. 대표는 전부, 관리자는 계약·계정, 개발자는 올리기만 보입니다.<br> 스토어(사용자용)와 주소가 다릅니다.<br><a href="/publish.html">판매자 — 앱 올리기</a> · <a href="/developers.md">개발자 안내서</a> · <a href="/stats.html">집계</a> · <a href="https://bsp-store.vercel.app" target="_blank">스토어 보기 ↗</a></p>
+
+  <div class="box">
+    <label for="tok">관리자 토큰 또는 관리자 키</label>
+    <input id="tok" type="password" placeholder="내 토큰 (BSP.… 또는 ADMIN_TOKEN)" autocomplete="off" />
+    <div id="who" style="margin-top:8px;font-size:12.5px;font-family:var(--mono);color:var(--muted)">토큰을 넣으면 권한에 맞는 것만 보입니다.</div>
+
+    <label for="org">회사 · 팀</label>
+    <input id="org" type="text" placeholder="삼성 파트너 / 설계2팀" />
+
+    <div class="row">
+      <div><label for="prod">제품</label>
+        <select id="prod" style="width:100%;background:#07090d;border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px">
+          <option value="hts">HTS (캐드)</option>
+          <option value="revit-store">BSP Store for Revit</option>
+          <option value="all">전체</option>
+        </select></div>
+      <div><label for="seats">좌석 수</label><input id="seats" type="text" value="10" /></div>
+    </div>
+    <label for="exp">만료일</label>
+    <input id="exp" type="text" value="2027-12-31" />
+
+    <button id="go">계약 만들고 시리얼 발급</button>
+    <div class="out" id="out"></div>
+    <table id="etbl" style="width:100%;border-collapse:collapse;font-size:13px;margin-top:16px"><tbody></tbody></table>
+  </div>
+
+  <div class="box">
+    <h2 style="font-size:14px;margin:0 0 6px;color:var(--muted)">사용자 계정</h2>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 14px">계정을 만들면 그 사람 앞으로 키가 함께 나옵니다. 끊기(revoke)도 여기서 합니다.</p>
+    <div class="row">
+      <div><label for="uname">이름</label><input id="uname" placeholder="진충환" /></div>
+      <div><label for="uorg">회사 · 팀</label><input id="uorg" placeholder="BSP Engineering" /></div>
+    </div>
+    <div class="row3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div><label for="urole">역할</label>
+        <select id="urole" style="width:100%;background:#07090d;border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px">
+          <option value="super">최고관리자(대표)</option><option value="admin">관리자</option><option value="publisher" selected>개발자(올리기만)</option><option value="user">사용자</option>
+        </select></div>
+      <div><label for="useats">좌석</label><input id="useats" value="10" /></div>
+      <div><label for="uexp">만료일</label><input id="uexp" value="2027-12-31" /></div>
+    </div>
+    <button id="mkuser">계정 만들기</button>
+    <div class="out" id="uout"></div>
+    <table id="utbl" style="width:100%;border-collapse:collapse;font-size:13px;margin-top:16px"><tbody></tbody></table>
+  </div>
+
+  <div class="box" id="cfgbox" style="display:none">
+    <h2 style="font-size:14px;margin:0 0 6px;color:var(--muted)">플랫폼 설정 · 재배포 <span style="color:var(--orange)">대표 전용</span></h2>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 14px">글귀·공지·라이선스 모드는 저장하면 바로 반영됩니다(재배포 불필요). 바꾼 기록은 깃에 남습니다.</p>
+    <label for="cnotice">공지 (스토어 맨 위 띠)</label>
+    <input id="cnotice" placeholder="비워 두면 안 보입니다" />
+    <div class="row">
+      <div><label for="clic">라이선스</label>
+        <select id="clic" style="width:100%;background:#07090d;border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px">
+          <option value="off">off — 사내 배포 (시리얼 없음)</option>
+          <option value="on">on — 계약·시리얼 검사</option>
+        </select></div>
+      <div><label for="clead">앞면 소개 문구</label><input id="clead" /></div>
+    </div>
+    <button id="csave">설정 저장</button>
+    <button id="credeploy" style="background:#222834;margin-left:8px">코드 재배포</button>
+    <button id="crollback" style="background:#2a1b1b;margin-left:8px">되돌리기</button>
+    <div class="out" id="cout"></div>
+  </div>
+
+  <div class="box note">
+    <b style="color:var(--text)">키에 대해</b><br>
+    키 자체가 회사·좌석·만료일을 담고 서명돼 있습니다. 그래서 DB 없이도 확인됩니다.<br>
+    되돌리기(회수)가 필요해지면 <code>LICENSE_SECRET</code> 을 바꾸면 그 전 키가 전부 무효가 되고,
+    개별 회수·발급 이력이 필요하면 <code>/api/issue</code> 에서 DB 에 한 줄 적으면 됩니다.<br><br>
+    <b style="color:var(--text)">환경변수</b><br>
+    <code>LICENSE_SECRET</code> — 키 서명용 (아무 긴 문자열)<br>
+    <code>ADMIN_TOKEN</code> — 이 페이지에서 쓰는 관리자 토큰<br><br>
+    <a href="https://bsp-store.vercel.app" target="_blank">← 스토어</a>
+  </div>
+</div>
+
+<script>
+const tokOf = () => document.getElementById("tok").value.trim();
+// BSP. 로 시작하면 관리자 계정 키, 아니면 환경변수 토큰
+const authH = () => { const v = tokOf();
+  return v.startsWith("BSP.") ? { "x-bsp-key": v } : { "x-admin-token": v }; };
+
+async function users(){
+  try{
+    const r = await fetch("/api/users", { headers: authH() });
+    const d = await r.json();
+    const tb = document.querySelector("#utbl tbody");
+    if(!d.ok){ tb.innerHTML = `<tr><td style="color:var(--muted);padding:8px">${d.reason||"토큰을 넣으세요"}</td></tr>`; return; }
+    tb.innerHTML = (d.users||[]).map(u=>`
+      <tr style="border-bottom:1px solid var(--line)">
+        <td style="padding:8px">${u.name}</td>
+        <td style="padding:8px;color:var(--muted)">${u.org||""}</td>
+        <td style="padding:8px;font-family:var(--mono);font-size:11.5px">${u.role}</td>
+        <td style="padding:8px;font-family:var(--mono);font-size:11.5px">${u.seats}석 · ${u.expires}</td>
+        <td style="padding:8px;color:${u.status==="active"?"var(--ok)":"var(--warn)"}">${u.status}</td>
+        <td style="padding:8px"><button style="margin:0;padding:5px 10px;font-size:12px;background:#222834"
+            onclick="toggle('${u.uid}','${u.status==="active"?"revoked":"active"}')">${u.status==="active"?"끊기":"살리기"}</button></td>
+        <td style="padding:8px"><button style="margin:0;padding:5px 10px;font-size:12px;background:#1b2a44"
+            onclick="navigator.clipboard.writeText('${u.key}');this.textContent='복사됨'">토큰 복사</button>
+            ${u.role==="publisher"||u.role==="admin"?`<button style="margin:0 0 0 6px;padding:5px 10px;font-size:12px;background:#2a2410"
+            onclick="md('${u.uid}')">MD 받기</button>`:""}</td>
+      </tr>`).join("") || `<tr><td style="padding:8px;color:var(--muted)">아직 없습니다</td></tr>`;
+  }catch(e){}
+}
+
+// 개발자에게 줄 MD 안내서 내려받기 (토큰이 박혀 나온다)
+async function md(uid){
+  const r = await fetch("/api/devdoc?uid="+uid, { headers: authH() });
+  if(!r.ok){ alert("실패 : " + r.status); return; }
+  const blob = await r.blob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "BSP-dev-" + uid + ".md";
+  a.click();
+}
+
+async function toggle(uid, status){
+  await fetch("/api/users", { method:"PATCH",
+    headers:{ "content-type":"application/json", ...authH() },
+    body: JSON.stringify({ uid, status }) });
+  users();
+}
+
+document.getElementById("mkuser").onclick = async () => {
+  const out = document.getElementById("uout");
+  out.className="out"; out.textContent="만드는 중…";
+  try{
+    const r = await fetch("/api/users", { method:"POST",
+      headers:{ "content-type":"application/json", ...authH() },
+      body: JSON.stringify({
+        name: uname.value.trim(), org: uorg.value.trim(), role: urole.value,
+        seats: Number(useats.value)||1, expires: uexp.value.trim() })});
+    const d = await r.json();
+    if(d.ok){
+      out.className="out ok";
+      out.textContent = `${d.user.name} (${d.user.role}) 계정 생성\n\n${d.user.key}`;
+      navigator.clipboard && navigator.clipboard.writeText(d.user.key);
+      users();
+    } else { out.className="out no"; out.textContent = "실패 : " + (d.reason||r.status); }
+  }catch(e){ out.className="out no"; out.textContent = "실패 : " + e.message; }
+};
+
+document.getElementById("tok").addEventListener("change", who);
+
+// 토큰으로 신원을 확인하고 화면을 그 사람 권한에 맞춘다
+async function loadCfg(){
+  try{
+    const d = await (await fetch("/api/config",{headers:authH()})).json();
+    if(!d.ok) return;
+    cnotice.value = d.config.notice||""; clic.value = d.config.license||"off"; clead.value = d.config.heroLead||"";
+    cout.textContent = d.config.updated ? `마지막 변경 ${d.config.updated} · ${d.config.updatedBy}` : "";
+  }catch(e){}
+}
+document.addEventListener("click", async (ev)=>{
+  if(ev.target.id==="csave"){
+    cout.className="out"; cout.textContent="저장 중…";
+    const r = await fetch("/api/config",{method:"PUT",headers:{"content-type":"application/json",...authH()},
+      body:JSON.stringify({notice:cnotice.value,license:clic.value,heroLead:clead.value})});
+    const d = await r.json();
+    cout.className = d.ok?"out ok":"out no";
+    cout.textContent = d.ok ? `저장됨 · 라이선스 ${d.config.license} · ${d.config.updated} (${d.config.updatedBy})` : "실패 : "+(d.reason||r.status);
+  }
+  if(ev.target.id==="crollback"){
+    cout.className="out"; cout.textContent="최근 배포 읽는 중…";
+    const d = await (await fetch("/api/rollback?project=bsp-store",{headers:authH()})).json();
+    if(!d.ok){ cout.className="out no"; cout.textContent="실패 : "+(d.reason||""); return; }
+    const list = d.deployments.map((x,i)=>`${i+1}. ${x.created}  ${x.url}  ${x.state}`).join("
+");
+    const pick = prompt("어느 배포로 돌릴까요? 번호를 넣으세요.
+
+"+list, "2");
+    const one = d.deployments[Number(pick)-1];
+    if(!one) return;
+    cout.textContent="되돌리는 중…";
+    const r = await (await fetch("/api/rollback",{method:"POST",headers:{"content-type":"application/json",...authH()},
+      body:JSON.stringify({project:"bsp-store",uid:one.uid})})).json();
+    cout.className = r.ok?"out ok":"out no";
+    cout.textContent = r.ok ? `되돌렸습니다 -> ${r.url} (${r.state})` : "실패 : "+(r.reason||"");
+  }
+  if(ev.target.id==="credeploy"){
+    cout.className="out"; cout.textContent="재배포 거는 중…";
+    const r = await fetch("/api/redeploy",{method:"POST",headers:{"content-type":"application/json",...authH()},
+      body:JSON.stringify({target:"both"})});
+    const d = await r.json();
+    cout.className = d.ok?"out ok":"out no";
+    cout.textContent = d.ok ? d.deployments.map(x=>`${x.project} ${x.error||x.url} ${x.state||""}`).join("
+") : "실패 : "+(d.reason||r.status);
+  }
+});
+
+async function who(){
+  const boxes = document.querySelectorAll(".box");
+  const badge = document.getElementById("who");
+  try{
+    const r = await fetch("/api/whoami", { headers: authH() });
+    const d = await r.json();
+    if(!d.ok){ badge.textContent = "확인 실패 : " + (d.reason||r.status); badge.style.color="var(--warn)";
+               boxes[1].style.display="none"; boxes[2].style.display="none"; return; }
+    badge.style.color = "var(--ok)";
+    badge.textContent = `${d.name} · ${({super:"최고관리자(대표)",admin:"관리자",publisher:"개발자",user:"사용자"})[d.role]||d.role}`
+      + (d.expires ? ` · 만료 ${d.expires}` : "");
+    // 계약(라이선스) 상자
+    boxes[0].querySelector("#go").style.display = d.can.entitle ? "" : "none";
+    // 계정 상자
+    boxes[1].style.display = d.can.users ? "" : "none";
+    if(d.can.entitle) ents();
+    if(d.can.users) users();
+    document.getElementById("cfgbox").style.display = d.role==="super" ? "" : "none";
+    if(d.role==="super") loadCfg();
+    if(!d.can.users && d.can.publish)
+      badge.textContent += " — 올리기만 됩니다. ";
+  }catch(e){ badge.textContent = "확인 실패 : " + e.message; badge.style.color="var(--warn)"; }
+}
+
+document.getElementById("go").onclick = async () => {
+  const out = document.getElementById("out");
+  out.className = "out"; out.textContent = "만드는 중…";
+  try{
+    const r = await fetch("/api/entitle", { method:"POST",
+      headers:{ "content-type":"application/json", ...authH() },
+      body: JSON.stringify({ org: org.value.trim(), product: prod.value,
+                             seats: Number(seats.value)||1, expires: exp.value.trim() })});
+    const d = await r.json();
+    if(d.ok){
+      const e = d.entitlement;
+      out.className="out ok";
+      out.textContent = `시리얼 ${e.serial}
+
+${e.org} · ${e.product} · ${e.seats}석 · ${e.expires}
+이 시리얼만 사용자에게 주면 됩니다. 라이선스는 런처가 서버에서 받습니다.`;
+      navigator.clipboard && navigator.clipboard.writeText(e.serial);
+      ents();
+    } else { out.className="out no"; out.textContent = "실패 : " + (d.reason||r.status); }
+  }catch(e){ out.className="out no"; out.textContent = "실패 : " + e.message; }
+};
+
+async function ents(){
+  try{
+    const d = await (await fetch("/api/entitle", { headers: authH() })).json();
+    const tb = document.querySelector("#etbl tbody");
+    if(!d.ok){ tb.innerHTML = `<tr><td style="padding:8px;color:var(--muted)">${d.reason||""}</td></tr>`; return; }
+    tb.innerHTML = (d.entitlements||[]).map(e=>`
+      <tr style="border-bottom:1px solid var(--line)">
+        <td style="padding:8px;font-family:var(--mono);font-size:11.5px">${e.serial}</td>
+        <td style="padding:8px">${e.org}</td>
+        <td style="padding:8px;color:var(--muted);font-size:12px">${e.product}</td>
+        <td style="padding:8px;font-family:var(--mono);font-size:11.5px">${e.used}/${e.seats}석 · ${e.expires}</td>
+        <td style="padding:8px;color:${e.status==="active"?"var(--ok)":"var(--warn)"}">${e.status}</td>
+        <td style="padding:8px"><button style="margin:0;padding:5px 10px;font-size:12px;background:#222834"
+          onclick="cut('${e.eid}','${e.status==="active"?"revoked":"active"}')">${e.status==="active"?"끊기":"살리기"}</button></td>
+      </tr>
+      ${(e.machines||[]).map(m=>`<tr><td></td><td colspan="4" style="padding:4px 8px;color:var(--muted);font-size:11.5px;font-family:var(--mono)">└ ${m.machine} · ${m.user||""} · ~${m.until}</td>
+        <td style="padding:4px 8px"><button style="margin:0;padding:3px 8px;font-size:11px;background:#2a1b1b"
+          onclick="freeSeat('${e.eid}','${m.machine}')">자리 반납</button></td></tr>`).join("")}`).join("")
+      || `<tr><td style="padding:8px;color:var(--muted)">아직 계약이 없습니다</td></tr>`;
+  }catch(e){}
+}
+async function cut(eid,status){
+  await fetch("/api/entitle",{method:"PATCH",headers:{"content-type":"application/json",...authH()},
+    body:JSON.stringify({eid,status})}); ents();
+}
+async function freeSeat(eid,machine){
+  await fetch("/api/entitle",{method:"PATCH",headers:{"content-type":"application/json",...authH()},
+    body:JSON.stringify({eid,machine,release:true})}); ents();
+}
+document.getElementById("tok").addEventListener("change", ents);
+</script>
+</body>
+</html>

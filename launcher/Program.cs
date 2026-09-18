@@ -27,12 +27,117 @@ namespace BSPLauncher
     static class Program
     {
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            // 화면 없이 라이선스 길만 돌려 보는 모드 (우리끼리 시험용)
+            //   BSPLauncher.exe -selftest BSPX-XXXX-XXXX-XXXX
+            if (args.Length >= 1 && args[0] == "-selftest")
+            {
+                SelfTest.Run(args.Length > 1 ? args[1] : "");
+                return;
+            }
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             Application.Run(new MainForm());
+        }
+    }
+
+    // ── 시험 모드 ────────────────────────────────────────────────────
+    //   런처가 실제로 쓰는 길(활성화 -> 갱신 -> 반납)을 그대로 돌려 결과를 찍는다.
+    //   결과는 %TEMP%sp_selftest.txt 에 남는다.
+    static class SelfTest
+    {
+        static readonly string STORE =
+            Environment.GetEnvironmentVariable("BSP_STORE") ?? "https://bsp-store.vercel.app";
+        static readonly string OUT = Path.Combine(Path.GetTempPath(), "bsp_selftest.txt");
+        static readonly StringBuilder Log = new StringBuilder();
+
+        static void W(string s) { Log.AppendLine(s); }
+
+        public static void Run(string serial)
+        {
+            string machine = Environment.MachineName + "-" + Environment.UserName;
+            W("== 런처 자체 시험 ==");
+            W("스토어   " + STORE);
+            W("PC       " + machine);
+            W("시리얼   " + (serial.Length > 0 ? serial : "(없음)"));
+            W("");
+
+            try
+            {
+                W("1) 앱 목록");
+                string apps = Get(STORE + "/api/apps");
+                int n = 0, i = 0;
+                while ((i = apps.IndexOf("\"id\":", i + 1, StringComparison.Ordinal)) > 0) n++;
+                W("   앱 " + n + "개 읽음  (" + apps.Length + " bytes)");
+
+                if (serial.Length == 0) { W(""); W("시리얼이 없어 라이선스 시험은 건너뜁니다."); Save(); return; }
+
+                W("");
+                W("2) 활성화");
+                string a = Post(STORE + "/api/activate",
+                    "{\"serial\":\"" + serial + "\",\"machine\":\"" + machine + "\",\"user\":\"selftest\"}");
+                W("   " + Trim(a));
+                string lease = Pick(a, "lease");
+                if (lease.Length == 0) { W("   -> 대여증을 못 받았습니다.  여기서 멈춥니다."); Save(); return; }
+
+                W("");
+                W("3) 갱신");
+                W("   " + Trim(Post(STORE + "/api/activate", "{\"lease\":\"" + lease + "\"}")));
+
+                W("");
+                W("4) 설치본 받기 (머리만)");
+                var req = (HttpWebRequest)WebRequest.Create(STORE + "/api/download?id=hts&v=7.8.3");
+                req.Method = "HEAD";
+                req.Headers.Add("x-bsp-token", lease);
+                using (var r = (HttpWebResponse)req.GetResponse())
+                    W("   " + (int)r.StatusCode + " " + r.ContentLength + " bytes  " + r.ContentType);
+
+                W("");
+                W("5) 자리 반납");
+                W("   " + Trim(Post(STORE + "/api/activate", "{\"lease\":\"" + lease + "\",\"release\":true}")));
+
+                W("");
+                W("6) 반납 뒤 갱신 (막혀야 정상)");
+                W("   " + Trim(Post(STORE + "/api/activate", "{\"lease\":\"" + lease + "\"}")));
+            }
+            catch (Exception ex) { W("실패 : " + ex.Message); }
+            Save();
+        }
+
+        static void Save()
+        {
+            try { File.WriteAllText(OUT, Log.ToString(), Encoding.UTF8); } catch { }
+        }
+
+        static string Trim(string s) { return s.Length > 300 ? s.Substring(0, 300) + "…" : s; }
+
+        static string Pick(string src, string k)
+        {
+            var m = Regex.Match(src, "\"" + k + "\"\\s*:\\s*\"([^\"]*)\"");
+            return m.Success ? m.Groups[1].Value : "";
+        }
+
+        static string Get(string url)
+        {
+            using (var wc = new WebClient()) { wc.Encoding = Encoding.UTF8; return wc.DownloadString(url); }
+        }
+
+        static string Post(string url, string json)
+        {
+            using (var wc = new WebClient())
+            {
+                wc.Encoding = Encoding.UTF8;
+                wc.Headers.Add("content-type", "application/json");
+                try { return wc.UploadString(url, json); }
+                catch (WebException e)
+                {
+                    using (var r = new StreamReader(e.Response.GetResponseStream())) return r.ReadToEnd();
+                }
+            }
         }
     }
 
@@ -98,7 +203,8 @@ namespace BSPLauncher
 
         static readonly string CFGDIR = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BSP");
-        static readonly string CFG = Path.Combine(CFGDIR, "license.txt");
+        static readonly string CFG = Path.Combine(CFGDIR, "license.txt");    // 시리얼
+        static readonly string LEASE = Path.Combine(CFGDIR, "lease.txt");     // 서버가 이 PC 앞으로 준 대여증
         static readonly string SENT = Path.Combine(CFGDIR, "sent.txt");   // 이미 보낸 기록 (이름|크기|시각)
 
         // 애드온(오토캐드 플러그인)이 여기에 떨구면 런처가 서버로 넘긴다
@@ -121,6 +227,7 @@ namespace BSPLauncher
         readonly List<string> _revit = Hosts.Revit();
         readonly bool _acad = Hosts.AutoCad();
         string _cdn = "";          // apps.json 의 cdn — 비면 스토어에서 바로 받는다
+        string _licMode = "off";   // 서버가 알려 준다 : off = 사내 배포(시리얼 없음)
         string _token = "";
         bool _reallyQuit = false;
 
@@ -141,7 +248,7 @@ namespace BSPLauncher
             };
             var sub = new Label
             {
-                Text = "라이선스 키를 넣고 앱을 고른 뒤 설치를 누르세요.  받기는 런처만 합니다.",
+                Text = "앱을 고르고 설치를 누르세요.  사내 배포 모드라 시리얼은 필요 없습니다.",
                 AutoSize = true, Left = 20, Top = 44,
                 ForeColor = Color.FromArgb(154, 164, 181)
             };
@@ -151,8 +258,9 @@ namespace BSPLauncher
             _key.ForeColor = Color.White; _key.BorderStyle = BorderStyle.FixedSingle;
             _key.Font = new Font("Consolas", 10F);
             _key.Text = LoadKey();
+            _key.Font = new Font("Consolas", 10F);
 
-            _check.Text = "키 확인"; _check.Left = 370; _check.Top = 72; _check.Width = 100; _check.Height = 27;
+            _check.Text = "활성화"; _check.Left = 370; _check.Top = 72; _check.Width = 100; _check.Height = 27;
             _check.FlatStyle = FlatStyle.Flat; _check.BackColor = Color.FromArgb(254, 110, 0);
             _check.ForeColor = Color.White; _check.FlatAppearance.BorderSize = 0;
             _check.Click += (s, e) => CheckKey();
@@ -224,6 +332,10 @@ namespace BSPLauncher
                 try { json = Get(STORE + "/api/apps"); }
                 catch { json = Get(STORE + "/apps.json"); }
                 _cdn = (Str(json, "cdn") ?? "").TrimEnd('/');
+                _licMode = Str(json, "license") ?? "off";
+                bool lic = _licMode == "on";
+                _key.Visible = lic; _check.Visible = lic;
+                if (!lic) _key.Text = "";
                 _apps.Clear();
                 _list.Items.Clear();
                 foreach (string block in SplitObjects(Cut(json, "\"apps\"")))
@@ -266,23 +378,57 @@ namespace BSPLauncher
             }
         }
 
-        // ── 라이선스 ────────────────────────────────────────────────────
+        // ── 라이선스 (오토데스크 방식) ──────────────────────────────────
+        //   사람은 시리얼만 넣는다.  라이선스(대여증)는 서버가 이 PC 앞으로 내준다.
+        //   대여증은 %APPDATA%\BSP\lease.txt 에 있고, 만료 전에 알아서 갱신한다.
         bool CheckKey()
         {
-            string key = _key.Text.Trim().ToUpperInvariant();
-            if (key.Length == 0) { Say("키를 넣으세요.", true); return false; }
+            string serial = _key.Text.Trim().ToUpperInvariant();
+
+            // 이미 대여증이 있으면 갱신부터 해 본다
+            string lease = LoadLease();
+            if (lease.Length > 0)
+            {
+                try
+                {
+                    string res = Post(STORE + "/api/activate", "{\"lease\":\"" + Esc(lease) + "\"}", "application/json");
+                    if (res.Contains("\"ok\":true"))
+                    {
+                        string nl = Str(res, "lease");
+                        if (!string.IsNullOrEmpty(nl)) SaveLease(nl);
+                        _token = nl ?? lease;
+                        Say("라이선스 확인됨 — " + Str(res, "org") + " · 다음 확인 " + Str(res, "until"));
+                        return true;
+                    }
+                    // 갱신이 막혔다 (계약 끊김·자리 회수) — 시리얼로 다시 받아 본다
+                    Say("갱신 거절 : " + (Str(res, "reason") ?? "확인 실패") + "  — 시리얼로 다시 활성화합니다.", true);
+                }
+                catch (Exception ex)
+                {
+                    // 서버에 못 닿았다 : 오프라인 유예 동안은 그대로 쓴다
+                    Say("서버에 못 닿았습니다 (" + ex.Message + ").  대여증으로 계속 씁니다.");
+                    _token = lease;
+                    return true;
+                }
+            }
+
+            if (serial.Length == 0) { Say("시리얼을 넣으세요 (BSPX-로 시작합니다).", true); return false; }
+
             try
             {
-                string body = "{\"key\":\"" + key + "\",\"machine\":\"" + Machine() + "\"}";
-                string res = Post(STORE + "/api/license", body, "application/json");
+                string body = "{\"serial\":\"" + Esc(serial) + "\",\"machine\":\"" + Machine() +
+                              "\",\"user\":\"" + Esc(Environment.UserName) + "\"}";
+                string res = Post(STORE + "/api/activate", body, "application/json");
                 if (!res.Contains("\"ok\":true"))
                 {
-                    Say("사용할 수 없는 키 : " + (Str(res, "reason") ?? "확인 실패"), true);
+                    Say("활성화 실패 : " + (Str(res, "reason") ?? "확인 실패"), true);
                     return false;
                 }
-                _token = Str(res, "token") ?? "";
-                SaveKey(key);
-                Say("확인됨 — " + Str(res, "org") + " · 만료 " + Str(res, "expires"));
+                _token = Str(res, "lease") ?? "";
+                SaveLease(_token);
+                SaveKey(serial);
+                Say("활성화됨 — " + Str(res, "org") + " · 좌석 " + Num(res, "used") + "/" + Num(res, "seats") +
+                    " · 다음 확인 " + Str(res, "until"));
                 return true;
             }
             catch (Exception ex)
@@ -292,13 +438,43 @@ namespace BSPLauncher
             }
         }
 
+        // 자리 반납 (PC 를 바꿀 때)
+        void Release()
+        {
+            string lease = LoadLease();
+            if (lease.Length == 0) { Say("반납할 자리가 없습니다.", true); return; }
+            try
+            {
+                string res = Post(STORE + "/api/activate",
+                    "{\"lease\":\"" + Esc(lease) + "\",\"release\":true}", "application/json");
+                if (res.Contains("\"ok\":true"))
+                {
+                    try { File.Delete(LEASE); } catch { }
+                    _token = "";
+                    Say("자리를 반납했습니다.  다른 PC 에서 같은 시리얼로 활성화할 수 있습니다.");
+                }
+                else Say("반납 실패 : " + (Str(res, "reason") ?? ""), true);
+            }
+            catch (Exception ex) { Say("반납 실패 : " + ex.Message, true); }
+        }
+
+        static string LoadLease()
+        {
+            try { return File.Exists(LEASE) ? File.ReadAllText(LEASE).Trim() : ""; }
+            catch { return ""; }
+        }
+        static void SaveLease(string v)
+        {
+            try { Directory.CreateDirectory(CFGDIR); File.WriteAllText(LEASE, v ?? ""); } catch { }
+        }
+
         // ── 설치 ────────────────────────────────────────────────────────
         void Install()
         {
             if (_list.SelectedIndex < 0 || _list.SelectedIndex >= _apps.Count) return;
             App a = _apps[_list.SelectedIndex];
             if (a.Status != "live") { Say("아직 준비중인 앱입니다.", true); return; }
-            if (_token.Length == 0 && !CheckKey()) return;
+            if (_licMode == "on" && _token.Length == 0 && !CheckKey()) return;
 
             // 호스트가 없으면 미리 막는다 — 리빗 애드온은 리빗에, 캐드 것은 캐드에
             if (a.Host == "revit" && _revit.Count == 0)

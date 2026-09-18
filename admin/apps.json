@@ -14,10 +14,10 @@
     }
   ],
   "launcher": {
-    "version": "1.3",
+    "version": "1.2",
     "file": "/downloads/BSPLauncher.exe",
-    "size": 30208,
-    "sha256": "ed9ebec42869180d932310a4a6fddc14bbfd475de24434c5ec7688386cbc4e6b"
+    "size": 26112,
+    "sha256": "fd76a8f61798f1dcaf64437de94f741af2ae6a40963b015efe5d2c528f24e911"
   },
   "apps": [
     {
