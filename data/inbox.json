@@ -31,7 +31,9 @@
     "kind": "change",
     "urgency": "soon",
     "text": "[TEST] 에이전트 수신 확인용입니다. 이 글 보이면 reply 에 한 줄 남겨 주세요.",
-    "status": "open",
-    "reply": ""
+    "status": "doing",
+    "reply": "",
+    "handledBy": "진충환",
+    "handledAt": "2026-09-18T07:12:50.109Z"
   }
 ]
