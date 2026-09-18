@@ -11,13 +11,24 @@
 //     -> { ok:false, reason }
 
 const { verifyKey, sign } = require("./_lib");
+const { readFile } = require("./_store");
+
+// 계정 목록에서 이 키를 찾는다 (없으면 계정 없이 서명만으로 통과 — 옛 키 호환)
+async function account(key) {
+  try {
+    const f = await readFile("data/users.json");
+    if (!f || !f.text) return null;
+    const list = JSON.parse(f.text);
+    return (Array.isArray(list) ? list : []).find((u) => u.key === key) || null;
+  } catch { return null; }
+}
 
 // 시연용 고정 키 (서명 키가 아직 없을 때).  운영에서는 지워도 된다.
 const DEMO = {
   "BSP-DEMO-0000-0001": { org: "BSP Engineering (사내)", seats: 50, expires: "2027-12-31" },
 };
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   res.setHeader("cache-control", "no-store");
   if (req.method !== "POST") {
     res.status(405).json({ ok: false, reason: "POST 로 보내세요" });
@@ -41,10 +52,19 @@ module.exports = (req, res) => {
     return;
   }
 
+  // 계정이 있으면 그 상태를 본다 — 끊긴 계정은 서명이 맞아도 막는다
+  const acc = await account(key);
+  if (acc && acc.status === "revoked") {
+    res.status(200).json({ ok: false, reason: "끊긴 계정입니다 (관리자에게 문의)" });
+    return;
+  }
+
   res.status(200).json({
     ok: true,
-    org: rec.org,
-    seats: rec.seats,
+    org: (acc && (acc.org || acc.name)) || rec.org,
+    user: acc ? acc.name : "",
+    role: acc ? acc.role : "user",
+    seats: acc ? acc.seats : rec.seats,
     expires: rec.expires,
     token: sign(`${key}|${machine}|${rec.expires}`),
   });

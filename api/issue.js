@@ -7,12 +7,13 @@
 //   발급 기록은 아직 안 남긴다 (키 자체가 내용을 담는다).  누구에게 언제 줬는지 남기려면
 //   여기서 DB 에 한 줄 적으면 된다 — Vercel KV / Postgres.
 
-const { makeKey, adminOk } = require("./_lib");
+const { makeKey, adminAuth } = require("./_lib");
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   res.setHeader("cache-control", "no-store");
   if (req.method !== "POST") { res.status(405).json({ ok: false, reason: "POST" }); return; }
-  if (!adminOk(req)) { res.status(401).json({ ok: false, reason: "관리자 토큰이 필요합니다" }); return; }
+  const who = await adminAuth(req);
+  if (!who.ok) { res.status(401).json({ ok: false, reason: who.reason }); return; }
 
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch { body = {}; } }
@@ -25,5 +26,5 @@ module.exports = (req, res) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(expires)) { res.status(200).json({ ok: false, reason: "만료일은 2027-12-31 꼴" }); return; }
   if (org.includes("|")) { res.status(200).json({ ok: false, reason: "이름에 | 는 못 씁니다" }); return; }
 
-  res.status(200).json({ ok: true, key: makeKey(org, seats, expires), org, seats, expires });
+  res.status(200).json({ ok: true, key: makeKey(org, seats, expires), org, seats, expires, by: who.by });
 };

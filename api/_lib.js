@@ -39,4 +39,29 @@ function adminOk(req) {
   return want.length > 0 && got === want;
 }
 
-module.exports = { makeKey, verifyKey, sign, adminOk };
+// 관리자 확인 — 환경변수 토큰이거나, 역할이 admin 인 계정의 키면 통과
+//   헤더 :  x-admin-token: <ADMIN_TOKEN>   또는   x-bsp-key: BSP.xxx.yyy
+async function adminAuth(req) {
+  if (adminOk(req)) return { ok: true, by: "token" };
+
+  const key = String(req.headers["x-bsp-key"] || "").trim();
+  if (!key) return { ok: false, reason: "관리자 토큰이나 관리자 키가 필요합니다" };
+  if (!verifyKey(key).ok) return { ok: false, reason: "키 서명이 맞지 않습니다" };
+
+  try {
+    const { readFile } = require("./_store");
+    const f = await readFile("data/users.json");
+    if (!f || !f.text) return { ok: false, reason: "계정 목록이 없습니다" };
+    const list = JSON.parse(f.text);
+    const u = (Array.isArray(list) ? list : []).find((x) => x.key === key);
+    if (!u) return { ok: false, reason: "없는 계정" };
+    if (u.status === "revoked") return { ok: false, reason: "끊긴 계정" };
+    if (u.role !== "admin") return { ok: false, reason: "관리자만 됩니다" };
+    if (new Date(u.expires) < new Date()) return { ok: false, reason: "만료된 계정" };
+    return { ok: true, by: u.name };
+  } catch (e) {
+    return { ok: false, reason: "확인 실패 : " + String(e.message).slice(0, 60) };
+  }
+}
+
+module.exports = { makeKey, verifyKey, sign, adminOk, adminAuth };
