@@ -10,5 +10,17 @@
     "note": "",
     "issuedBy": "token",
     "created": "2026-09-18"
+  },
+  {
+    "eid": "e194fbe2f",
+    "serial": "BSPX-6Z1L-PUD3-RLPC",
+    "org": "BSP 내부개발",
+    "product": "hts",
+    "seats": 3,
+    "expires": "2027-12-31",
+    "status": "active",
+    "note": "런처 시험",
+    "issuedBy": "token",
+    "created": "2026-09-18"
   }
 ]
