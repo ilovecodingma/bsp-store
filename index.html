@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BSP Store — Direct BIM to SHOP</title>
+<meta name="description" content="BSP Engineering 사내 배포 스토어. 런처 하나로 설치하고 자동으로 최신판을 받습니다." />
+<style>
+  :root{
+    --blue:#3080ff; --blue-dim:#155dfc; --blue-soft:#54a2ff;
+    --orange:#fe6e00; --orange-dim:#f05100;
+    --ink:#050505; --panel:#0d0f13; --panel2:#141821;
+    --line:#222834; --text:#e8ecf3; --muted:#9aa4b5;
+    --ok:#22c55e; --warn:#fb2c36;
+    --font:"Pretendard","Noto Sans KR",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(5,5,5,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;gap:28px;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em}
+  .logo .mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--orange));display:grid;place-items:center;font-size:13px;color:#fff}
+  .logo small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em}
+  .nav nav{display:flex;gap:22px;margin-left:auto;font-size:14px;color:var(--muted)}
+  .nav nav a:hover{color:#fff}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:12px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-primary:hover{background:var(--blue-dim)}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--blue)}
+  .btn-orange{background:var(--orange);color:#fff}
+  .btn-orange:hover{background:var(--orange-dim)}
+
+  .hero{padding:84px 0 56px;border-bottom:1px solid var(--line);
+        background:radial-gradient(900px 420px at 18% -10%,rgba(48,128,255,.20),transparent 60%),
+                   radial-gradient(700px 380px at 88% 0%,rgba(254,110,0,.14),transparent 60%)}
+  .tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;
+       color:var(--blue-soft);border:1px solid rgba(48,128,255,.35);background:rgba(48,128,255,.08);border-radius:999px;padding:6px 12px}
+  h1{font-size:clamp(30px,5vw,50px);line-height:1.15;margin:18px 0 14px;letter-spacing:-.03em}
+  h1 em{font-style:normal;color:var(--orange)}
+  .lead{color:var(--muted);font-size:17px;line-height:1.7;max-width:640px;margin:0 0 28px}
+  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .hero-note{font-size:13px;color:var(--muted);margin-top:14px}
+  .hero-note code{font-family:var(--mono);color:var(--blue-soft)}
+
+  section{padding:64px 0}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px}
+  .sec-head h2{font-size:22px;margin:0;letter-spacing:-.02em}
+  .sec-head p{margin:6px 0 0;color:var(--muted);font-size:14px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px}
+  .card.soon{opacity:.62}
+  .card-top{display:flex;gap:14px;align-items:flex-start}
+  .icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex:none;
+        background:linear-gradient(135deg,rgba(48,128,255,.25),rgba(254,110,0,.22));border:1px solid var(--line)}
+  .card h3{margin:0;font-size:17px;letter-spacing:-.01em}
+  .card .sub{margin:4px 0 0;font-size:13px;color:var(--muted)}
+  .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .pill.live{color:var(--ok);border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08)}
+  .pill.dev{color:var(--orange);border-color:rgba(254,110,0,.4);background:rgba(254,110,0,.08)}
+  .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:12.5px;color:var(--muted);
+        border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0}
+  .meta b{display:block;color:var(--text);font-weight:600;font-family:var(--mono);font-size:12.5px;margin-top:2px}
+  .card-actions{display:flex;gap:10px;margin-top:auto}
+  .card-actions .btn{flex:1;padding:11px 14px}
+
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+  .step{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .step .n{font-family:var(--mono);color:var(--blue);font-size:12px;font-weight:700}
+  .step h4{margin:8px 0 6px;font-size:15px}
+  .step p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.65}
+
+  .lic{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}
+  @media(max-width:860px){.lic{grid-template-columns:1fr}}
+  .lic-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .lic-box label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:.04em}
+  .lic-row{display:flex;gap:10px;flex-wrap:wrap}
+  input[type=text]{flex:1;min-width:220px;background:#07090d;border:1px solid var(--line);border-radius:10px;
+        padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:14px}
+  input[type=text]:focus{outline:none;border-color:var(--blue)}
+  .result{margin-top:14px;font-size:13.5px;font-family:var(--mono);color:var(--muted);min-height:20px;white-space:pre-wrap}
+  .result.ok{color:var(--ok)} .result.no{color:var(--warn)}
+  .lic-note{color:var(--muted);font-size:13.5px;line-height:1.75}
+  .lic-note code{font-family:var(--mono);color:var(--blue-soft);font-size:12.5px}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.04em}
+  td.v{font-family:var(--mono);color:var(--blue-soft);white-space:nowrap}
+
+  footer{border-top:1px solid var(--line);padding:34px 0 60px;color:var(--muted);font-size:13px}
+  .foot{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo">
+      <span class="mark">B</span>
+      <span>BSP Store<small>DIRECT BIM TO SHOP</small></span>
+    </div>
+    <nav>
+      <a href="#apps">앱</a>
+      <a href="#how">설치</a>
+      <a href="#license">라이선스</a>
+      <a href="#changes">변경내역</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="tag">● 사내 배포 · v7.8.3</span>
+    <h1>런처 하나로<br>현장 도구를 <em>바로</em> 깝니다.</h1>
+    <p class="lead">
+      BSP 런처가 라이선스를 확인하고 CDN에서 최신판을 받아 설치합니다.
+      설치본을 메일로 주고받을 일이 없어지고, 모든 PC가 같은 판을 씁니다.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/downloads/BSPLauncher.exe" download>런처 내려받기 (Windows)</a>
+      <a class="btn btn-ghost" href="#apps">앱 목록 보기</a>
+    </div>
+    <p class="hero-note">앱 파일은 런처로만 내려갑니다 — <code>플랫폼 → 런처 → 앱</code>. 웹에서 직접 받는 길은 두지 않습니다.</p>
+  </div>
+</div>
+
+<section id="apps">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <h2>앱</h2>
+        <p>런처가 이 목록(<code>/apps.json</code>)을 읽어 설치·갱신합니다.</p>
+      </div>
+      <span class="pill" id="manifest-stamp">manifest 불러오는 중…</span>
+    </div>
+    <div class="grid" id="apps-grid"></div>
+  </div>
+</section>
+
+<section id="how" style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head"><div><h2>설치</h2><p>세 단계면 끝납니다.</p></div></div>
+    <div class="steps">
+      <div class="step">
+        <div class="n">01</div><h4>런처를 받는다</h4>
+        <p>BSPLauncher.exe 를 내려받아 실행합니다. 설치가 필요 없는 단일 실행 파일입니다.</p>
+      </div>
+      <div class="step">
+        <div class="n">02</div><h4>라이선스 키를 넣는다</h4>
+        <p>회사에서 받은 키를 한 번 넣으면 PC에 저장됩니다. 키는 라이선스 서버가 확인합니다.</p>
+      </div>
+      <div class="step">
+        <div class="n">03</div><h4>설치를 누른다</h4>
+        <p>런처가 CDN에서 설치본을 받아 해시를 맞춰 보고 조용히 설치합니다. 오토캐드는 자동으로 닫힙니다.</p>
+      </div>
+      <div class="step">
+        <div class="n">04</div><h4>런처는 트레이에 남는다</h4>
+        <p>앱이 남긴 기록(자동 기록·오류)을 10분마다 모아 서버로 보냅니다. 어느 PC에서 무엇이 안 됐는지
+           물어보지 않아도 보입니다. 런처 창에서 끌 수 있습니다.</p>
+      </div>
+    </div>
+    <p class="hero-note" style="margin-top:22px">
+      길은 하나입니다 — <code>플랫폼(스토어)</code> → <code>런처(가운데 라우터 · 라이선스 · 기록)</code> → <code>앱</code>.
+      라이선스는 관리자가 <a href="/admin.html" style="color:var(--blue-soft)">발급 페이지</a>에서 만들어 줍니다.
+    </p>
+  </div>
+</section>
+
+<section id="license" style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head"><div><h2>라이선스</h2><p>키 한 개 = PC 한 대. 여기서 바로 확인해 볼 수 있습니다.</p></div></div>
+    <div class="lic">
+      <div class="lic-box">
+        <label for="key">라이선스 키</label>
+        <div class="lic-row">
+          <input id="key" type="text" placeholder="BSP-XXXX-XXXX-XXXX" autocomplete="off" />
+          <button class="btn btn-orange" id="check">확인</button>
+        </div>
+        <div class="result" id="result"></div>
+      </div>
+      <div class="lic-note">
+        <p><b style="color:var(--text)">지금 상태</b><br>
+        <code>/api/license</code> 가 키를 확인하고 만료일·좌석 수를 돌려줍니다.
+        지금은 키 목록이 서버 파일에 들어 있는 1단계 구현이고, 발급·회수·좌석 관리가 필요해지면
+        DB(예: Vercel KV / Postgres)로 옮기면 됩니다.</p>
+        <p><b style="color:var(--text)">런처가 하는 일</b><br>
+        키를 <code>/api/license</code> 로 보내고, 받은 토큰을 헤더에 실어 <code>/apps.json</code> 의
+        다운로드 주소를 받습니다. 설치본은 CDN에서 받고 SHA-256 을 맞춰 봅니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="changes" style="border-top:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head"><div><h2>변경내역</h2><p>BSP Solution</p></div></div>
+    <table>
+      <thead><tr><th style="width:110px">버전</th><th>고친 것</th></tr></thead>
+      <tbody>
+        <tr><td class="v">7.8.3</td><td>자동이 구간을 블록이 아니라 노즐로 자릅니다 (치수 재기와 같은 기준)</td></tr>
+        <tr><td class="v">7.8.2</td><td>세로로 긴 구간을 눕혀서 A3 에 앉히고, 한 번에 3장까지 만듭니다</td></tr>
+        <tr><td class="v">7.8.0</td><td>평행 배관이 한 구간에 섞여도 줄마다 각각 잽니다 (조용히 빠지던 것)</td></tr>
+        <tr><td class="v">7.7.5</td><td>배관 레이어 블록만 보고, 값이 안 맞으면 스스로 3차까지 맞춥니다</td></tr>
+        <tr><td class="v">7.7.4</td><td>기록을 QR 파일로 뽑는 NOZQRT, 화면 없는 환경에서도 자동이 돕니다</td></tr>
+        <tr><td class="v">7.7.3</td><td>자르는 값을 NOZ_DIMSET.txt 로 빼서 다시 설치 없이 고칩니다</td></tr>
+        <tr><td class="v">7.7.2</td><td>자동 기록을 바로 QR 로 띄우고, 못 찾은 까닭을 기록에 적습니다</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>BSP Engineering · Direct BIM to SHOP<br>사내 배포용 스토어 — 외부 공개 금지</div>
+    <div style="text-align:right">문의 : 설계자동화팀<br><span style="font-family:var(--mono)">store build 2026-09-18</span></div>
+  </div>
+</footer>
+
+<script>
+const fmt = b => b >= 1048576 ? (b/1048576).toFixed(1)+" MB" : Math.round(b/1024)+" KB";
+
+fetch("/apps.json", {cache:"no-store"}).then(r=>r.json()).then(m=>{
+  document.getElementById("manifest-stamp").textContent = "manifest " + m.updated;
+  document.getElementById("apps-grid").innerHTML = m.apps.map(a=>`
+    <div class="card ${a.status==="live"?"":"soon"}">
+      <div class="card-top">
+        <div class="icon">${a.icon}</div>
+        <div style="flex:1">
+          <h3>${a.name}</h3>
+          <p class="sub">${a.summary}</p>
+        </div>
+        <span class="pill ${a.status==="live"?"live":"dev"}">${a.status==="live"?"배포중":"준비중"}</span>
+      </div>
+      <div class="meta">
+        <div>버전<b>${a.version||"—"}</b></div>
+        <div>크기<b>${a.size?fmt(a.size):"—"}</b></div>
+        <div>대상<b>${a.target}</b></div>
+        <div>올린 날<b>${a.released||"—"}</b></div>
+      </div>
+      <div class="card-actions">
+        ${a.status==="live"
+          ? `<span class="btn btn-primary" style="cursor:default;opacity:.9">런처에서 설치</span>
+             <button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${a.sha256}');this.textContent='복사됨'">SHA-256</button>`
+          : `<button class="btn btn-ghost" disabled style="opacity:.6;cursor:default">준비중</button>`}
+      </div>
+    </div>`).join("");
+}).catch(()=>{
+  document.getElementById("manifest-stamp").textContent = "manifest 못 읽음";
+});
+
+document.getElementById("check").onclick = async () => {
+  const el = document.getElementById("result");
+  const key = document.getElementById("key").value.trim();
+  if(!key){ el.className="result no"; el.textContent="키를 넣으세요."; return; }
+  el.className="result"; el.textContent="확인 중…";
+  try{
+    const r = await fetch("/api/license", {
+      method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({key, machine:"web-check"})
+    });
+    const d = await r.json();
+    if(d.ok){
+      el.className="result ok";
+      el.textContent = `사용 가능\n회사   ${d.org}\n좌석   ${d.seats}\n만료   ${d.expires}`;
+    }else{
+      el.className="result no";
+      el.textContent = "사용할 수 없는 키 : " + (d.reason||"확인 실패");
+    }
+  }catch(e){
+    el.className="result no";
+    el.textContent = "라이선스 서버에 닿지 못했습니다 (로컬에서 연 경우 정상).";
+  }
+};
+</script>
+</body>
+</html>

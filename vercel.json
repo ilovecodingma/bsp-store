@@ -1,0 +1,15 @@
+{
+  "headers": [
+    {
+      "source": "/apps.json",
+      "headers": [{ "key": "cache-control", "value": "no-store" }]
+    },
+    {
+      "source": "/downloads/(.*)",
+      "headers": [
+        { "key": "cache-control", "value": "public, max-age=31536000, immutable" },
+        { "key": "content-disposition", "value": "attachment" }
+      ]
+    }
+  ]
+}

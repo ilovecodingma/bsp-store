@@ -1,0 +1,4 @@
+launcher/bin/
+launcher/obj/
+_logs/
+.vercel/

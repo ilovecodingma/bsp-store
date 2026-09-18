@@ -1,0 +1,46 @@
+{
+  "updated": "2026-09-18",
+  "cdn": "",
+  "apps": [
+    {
+      "id": "bsp-solution",
+      "name": "BSP Solution",
+      "summary": "오토캐드 리본 — 구역 잡기 · 치수 재기 · 자동 제작도",
+      "icon": "◧",
+      "status": "live",
+      "version": "7.8.3",
+      "target": "AutoCAD 2021+ / Win64",
+      "released": "2026-09-18",
+      "size": 548864,
+      "sha256": "d4494631b580cf8397778a08391132862d291d968ed527fbe8a1cf393494e6f6",
+      "download": "/downloads/BSP_Solution_7.8.3.msi",
+      "silent": "msiexec /i \"%FILE%\" /qn"
+    },
+    {
+      "id": "noz-pipeline",
+      "name": "NOZ Pipeline",
+      "summary": "IFC 를 넣으면 평면 DXF 와 노즐 데이터가 나옵니다",
+      "icon": "◳",
+      "status": "soon",
+      "version": "",
+      "target": "Windows",
+      "released": "",
+      "size": 0,
+      "sha256": "",
+      "download": ""
+    },
+    {
+      "id": "dwgviz",
+      "name": "DWGViz",
+      "summary": "도면을 요소별로 뜯어 보고 통계로 보여 줍니다",
+      "icon": "◫",
+      "status": "soon",
+      "version": "",
+      "target": "Windows",
+      "released": "",
+      "size": 0,
+      "sha256": "",
+      "download": ""
+    }
+  ]
+}
