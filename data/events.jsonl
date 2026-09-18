@@ -1,1 +1,8 @@
 {"t":"2026-09-18T05:42:03.545Z","type":"launch","app":"hts","version":"7.8.3","machine":"k-pc","org":"","ok":true,"note":"���� ����","ip":"14.35.180.27"}
+{"t":"2026-09-18T05:43:12.107Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_AUTO_2026-09-18.txt 블록 14 구간 3 치수줄 3","ip":"14.35.180.27"}
+{"t":"2026-09-18T05:43:12.110Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_AUTO_CR_노즐기준.txt 블록 17785 구간 145 치수줄 94","ip":"14.35.180.27"}
+{"t":"2026-09-18T05:43:12.110Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_AUTO_real.txt 블록 10141 구간 204 치수줄 237","ip":"14.35.180.27"}
+{"t":"2026-09-18T05:43:12.111Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_ERR.txt 블록  구간  치수줄 0","ip":"14.35.180.27"}
+{"t":"2026-09-18T05:43:12.111Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_IDX.txt 블록  구간  치수줄 0","ip":"14.35.180.27"}
+{"t":"2026-09-18T05:43:12.111Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_SCAN.txt 블록  구간  치수줄 0","ip":"14.35.180.27"}
+{"t":"2026-09-18T05:43:12.111Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_VM.txt 블록  구간  치수줄 0","ip":"14.35.180.27"}
