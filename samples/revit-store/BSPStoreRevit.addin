@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>BSP Store</Name>
+    <Assembly>BSPStoreRevit.dll</Assembly>
+    <AddInId>2c9a6f18-31d4-4f77-9b0e-5a1e7c4d2b90</AddInId>
+    <FullClassName>BSPStoreRevit.App</FullClassName>
+    <VendorId>BSP</VendorId>
+    <VendorDescription>BSP Engineering</VendorDescription>
+  </AddIn>
+</RevitAddIns>

@@ -21,6 +21,29 @@
   },
   "apps": [
     {
+      "id": "revit-store",
+      "name": "BSP Store for Revit",
+      "publisher": "BSP Engineering",
+      "summary": "리빗 안에서 애드인을 고르고 바로 설치하는 스토어 패널",
+      "icon": "◉",
+      "status": "live",
+      "host": "revit",
+      "kind": "addin",
+      "revit": [
+        "2024",
+        "2025",
+        "2026",
+        "2027"
+      ],
+      "version": "1.0.0",
+      "target": "Revit 2024+",
+      "released": "2026-09-18",
+      "size": 8329,
+      "sha256": "41e531e049ad3c93258c52d39464993b334d9c867868eaf5c6a24cffb65242e5",
+      "download": "/api/download?id=revit-store&v=1.0.0",
+      "file": "/downloads/BSP_Store_Revit_1.0.0.zip"
+    },
+    {
       "id": "hts",
       "name": "HTS",
       "publisher": "BSP Engineering",

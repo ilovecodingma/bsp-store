@@ -1,0 +1,10 @@
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\RevitStore.csproj.AssemblyReference.cache
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\RevitStore.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\RevitStore.AssemblyInfoInputs.cache
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\RevitStore.AssemblyInfo.cs
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\RevitStore.csproj.CoreCompileInputs.cache
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\RevitStore.sourcelink.json
+C:\Users\k\Desktop\bsp-store\samples\revit-store\bin\Release\BSPStoreRevit.dll
+C:\Users\k\Desktop\bsp-store\samples\revit-store\bin\Release\BSPStoreRevit.pdb
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\BSPStoreRevit.dll
+C:\Users\k\Desktop\bsp-store\samples\revit-store\obj\Release\BSPStoreRevit.pdb
