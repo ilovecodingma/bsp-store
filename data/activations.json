@@ -7,5 +7,14 @@
     "activated": "2026-09-18",
     "leaseUntil": "2026-10-18",
     "lastSeen": "2026-09-18"
+  },
+  {
+    "eid": "ee15db61b",
+    "machine": "PC-2",
+    "user": "진충환",
+    "status": "active",
+    "activated": "2026-09-18",
+    "leaseUntil": "2026-10-18",
+    "lastSeen": "2026-09-18"
   }
 ]
