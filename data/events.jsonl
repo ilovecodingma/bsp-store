@@ -7,3 +7,4 @@
 {"t":"2026-09-18T05:43:12.111Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_SCAN.txt 블록  구간  치수줄 0","ip":"14.35.180.27"}
 {"t":"2026-09-18T05:43:12.111Z","type":"addon","app":"bsp-solution","version":"","machine":"DESKTOP-TH4MMC9-k","ok":true,"note":"NOZ_VM.txt 블록  구간  치수줄 0","ip":"14.35.180.27"}
 {"t":"2026-09-18T06:39:19.885Z","type":"license","app":"hts","version":"","machine":"PC-1","org":"BSP 설계2팀","ok":true,"note":"활성화 1/2"}
+{"t":"2026-09-18T06:39:22.097Z","type":"license","app":"hts","version":"","machine":"PC-2","org":"BSP 설계2팀","ok":true,"note":"활성화 2/2"}
