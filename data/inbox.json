@@ -22,5 +22,16 @@
     "text": "[TEST] ���� Ȯ�ο� ��û�Դϴ�. Ȯ�� �� �ݾ� �ּ���.",
     "status": "open",
     "reply": ""
+  },
+  {
+    "id": "r81482f",
+    "t": "2026-09-18T07:08:51.709Z",
+    "by": "진충환",
+    "role": "super",
+    "kind": "change",
+    "urgency": "soon",
+    "text": "[TEST] 에이전트 수신 확인용입니다. 이 글 보이면 reply 에 한 줄 남겨 주세요.",
+    "status": "open",
+    "reply": ""
   }
 ]
