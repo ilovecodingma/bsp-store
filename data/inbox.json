@@ -7,7 +7,9 @@
     "kind": "change",
     "urgency": "soon",
     "text": "시험: 대표님 토큰으로 요청함 넣기",
-    "status": "open",
-    "reply": ""
+    "status": "done",
+    "reply": "확인했습니다 (시험)",
+    "handledBy": "진충환",
+    "handledAt": "2026-09-18T07:01:22.360Z"
   }
 ]
