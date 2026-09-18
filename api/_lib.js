@@ -42,7 +42,7 @@ function adminOk(req) {
 // 관리자 확인 — 환경변수 토큰이거나, 역할이 admin 인 계정의 키면 통과
 //   헤더 :  x-admin-token: <ADMIN_TOKEN>   또는   x-bsp-key: BSP.xxx.yyy
 async function adminAuth(req) {
-  if (adminOk(req)) return { ok: true, by: "token" };
+  if (adminOk(req)) return { ok: true, by: "token", rank: 3, role: "super" };
 
   const key = String(req.headers["x-bsp-key"] || "").trim();
   if (!key) return { ok: false, reason: "관리자 토큰이나 관리자 키가 필요합니다" };
@@ -56,9 +56,9 @@ async function adminAuth(req) {
     const u = (Array.isArray(list) ? list : []).find((x) => x.key === key);
     if (!u) return { ok: false, reason: "없는 계정" };
     if (u.status === "revoked") return { ok: false, reason: "끊긴 계정" };
-    if (u.role !== "admin") return { ok: false, reason: "관리자만 됩니다" };
+    if (u.role !== "admin" && u.role !== "super") return { ok: false, reason: "관리자만 됩니다" };
     if (new Date(u.expires) < new Date()) return { ok: false, reason: "만료된 계정" };
-    return { ok: true, by: u.name };
+    return { ok: true, by: u.name, rank: u.role === "super" ? 3 : 2, role: u.role, uid: u.uid };
   } catch (e) {
     return { ok: false, reason: "확인 실패 : " + String(e.message).slice(0, 60) };
   }
