@@ -10,5 +10,17 @@
     "status": "active",
     "note": "대표",
     "created": "2026-09-18"
+  },
+  {
+    "uid": "ucb17f240",
+    "name": "박성상",
+    "org": "BSP Engineering",
+    "role": "admin",
+    "seats": 999,
+    "expires": "2029-12-31",
+    "key": "BSP.QlNQIEVuZ2luZWVyaW5nI3VjYjE3ZjI0MHw5OTl8MjAyOS0xMi0zMQ.bYyJDaU9ge",
+    "status": "active",
+    "note": "관리자",
+    "created": "2026-09-18"
   }
 ]
