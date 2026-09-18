@@ -3,10 +3,11 @@
     "eid": "ee15db61b",
     "machine": "PC-1",
     "user": "박성상",
-    "status": "active",
+    "status": "released",
     "activated": "2026-09-18",
     "leaseUntil": "2026-10-18",
-    "lastSeen": "2026-09-18"
+    "lastSeen": "2026-09-18",
+    "releasedAt": "2026-09-18"
   },
   {
     "eid": "ee15db61b",
