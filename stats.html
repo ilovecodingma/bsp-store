@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BSP Store — 집계</title>
+<style>
+  :root{--blue:#3080ff;--orange:#fe6e00;--ink:#050505;--panel:#0d0f13;--line:#222834;
+        --text:#e8ecf3;--muted:#9aa4b5;--ok:#22c55e;--warn:#fb2c36;--mono:ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:40px 20px 80px}
+  h1{font-size:22px;margin:0 0 4px;letter-spacing:-.02em}
+  h1 span{color:var(--blue)}
+  .lead{color:var(--muted);font-size:13.5px;margin:0 0 24px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .tile b{display:block;font-size:26px;font-family:var(--mono);letter-spacing:-.02em;margin-top:6px}
+  .tile span{font-size:12px;color:var(--muted);letter-spacing:.04em}
+  .tile.blue b{color:var(--blue)} .tile.orange b{color:var(--orange)} .tile.red b{color:var(--warn)}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:18px}
+  .box h2{font-size:14px;margin:0 0 14px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.04em}
+  td.m{font-family:var(--mono);font-size:12px}
+  td.n{font-family:var(--mono);text-align:right;color:var(--blue)}
+  .bars{display:flex;align-items:flex-end;gap:4px;height:90px}
+  .bars div{flex:1;background:linear-gradient(180deg,var(--blue),rgba(48,128,255,.25));border-radius:3px 3px 0 0;min-height:2px;position:relative}
+  .bars div span{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--muted);font-family:var(--mono)}
+  .err{color:var(--warn)}
+  .off{color:var(--orange);font-size:13px}
+  a{color:#54a2ff;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>BSP</span> 집계</h1>
+  <p class="lead">런처가 보낸 내려받기·설치·애드온 기록을 모아 셉니다. <a href="/">← 스토어</a></p>
+  <div id="body">불러오는 중…</div>
+</div>
+<script>
+fetch("/api/stats?days=30").then(r=>r.json()).then(d=>{
+  if(!d.ok){ document.getElementById("body").innerHTML =
+    `<div class="box off">아직 저장소가 연결되지 않았습니다 (${d.reason||d.store}).<br>
+     Vercel 환경변수 <code>GH_TOKEN</code> · <code>GH_REPO</code> 를 넣으면 쌓이기 시작합니다.</div>`; return; }
+  const t=d.byType||{};
+  const max=Math.max(1,...d.byDay.map(x=>x.n));
+  document.getElementById("body").innerHTML = `
+    <div class="tiles">
+      <div class="tile blue"><span>내려받기</span><b>${t.download||0}</b></div>
+      <div class="tile"><span>설치</span><b>${t.install||0}</b></div>
+      <div class="tile orange"><span>애드온 기록</span><b>${t.addon||0}</b></div>
+      <div class="tile red"><span>오류</span><b>${t.error||0}</b></div>
+      <div class="tile"><span>PC</span><b>${(d.machines||[]).length}</b></div>
+    </div>
+
+    <div class="box">
+      <h2>최근 30일 (하루치)</h2>
+      <div class="bars">${d.byDay.map(x=>`<div style="height:${Math.round(x.n/max*100)}%"><span>${x.d.slice(5)}</span></div>`).join("")}</div>
+      <div style="height:22px"></div>
+    </div>
+
+    <div class="box">
+      <h2>앱별</h2>
+      <table><thead><tr><th>앱</th><th>버전</th><th style="text-align:right">내려받기</th>
+        <th style="text-align:right">설치</th><th style="text-align:right">오류</th></tr></thead>
+        <tbody>${(d.byApp||[]).map(a=>`<tr><td>${a.app}</td><td class="m">${a.version||"-"}</td>
+          <td class="n">${a.download}</td><td class="n">${a.install}</td><td class="n">${a.error}</td></tr>`).join("")||
+          `<tr><td colspan="5" style="color:var(--muted)">아직 없습니다</td></tr>`}</tbody></table>
+    </div>
+
+    <div class="box">
+      <h2>PC 별</h2>
+      <table><thead><tr><th>머신</th><th style="text-align:right">건수</th></tr></thead>
+        <tbody>${(d.machines||[]).map(m=>`<tr><td class="m">${m.m}</td><td class="n">${m.n}</td></tr>`).join("")||
+          `<tr><td colspan="2" style="color:var(--muted)">아직 없습니다</td></tr>`}</tbody></table>
+    </div>
+
+    <div class="box">
+      <h2>최근 기록</h2>
+      <table><thead><tr><th>시각</th><th>종류</th><th>PC</th><th>내용</th></tr></thead>
+        <tbody>${(d.recent||[]).map(r=>`<tr class="${r.ok===false?'err':''}">
+          <td class="m">${(r.t||"").slice(5,16).replace("T"," ")}</td>
+          <td>${r.type}</td><td class="m">${r.machine||"-"}</td>
+          <td style="color:var(--muted)">${(r.note||"").replace(/</g,"&lt;")}</td></tr>`).join("")||
+          `<tr><td colspan="4" style="color:var(--muted)">아직 없습니다</td></tr>`}</tbody></table>
+    </div>`;
+}).catch(e=>{
+  document.getElementById("body").innerHTML = `<div class="box off">집계를 못 읽었습니다 : ${e.message}</div>`;
+});
+</script>
+</body>
+</html>

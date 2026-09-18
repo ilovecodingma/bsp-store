@@ -38,8 +38,56 @@ namespace BSPLauncher
 
     class App
     {
-        public string Id, Name, Summary, Status, Version, Target, Released, Sha256, Download;
+        public string Id, Name, Summary, Status, Version, Target, Released, Sha256, Download, Publisher;
+        public string Host = "windows";   // autocad | revit | windows
+        public string Kind = "msi";       // msi | bundle(오토캐드) | addin(리빗)
         public long Size;
+    }
+
+    // 이 PC 에 깔린 오토데스크 제품 찾기 — 애드온을 어디에 넣을지 정한다
+    static class Hosts
+    {
+        public static List<string> Revit()      // 2024, 2025 …
+        {
+            var v = new List<string>();
+            try
+            {
+                string root = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Autodesk", "Revit", "Addins");
+                if (Directory.Exists(root))
+                    foreach (string d in Directory.GetDirectories(root))
+                        v.Add(Path.GetFileName(d));
+            }
+            catch { }
+            return v;
+        }
+
+        public static bool AutoCad()
+        {
+            try
+            {
+                string p = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Autodesk");
+                if (!Directory.Exists(p)) return false;
+                foreach (string d in Directory.GetDirectories(p))
+                    if (Path.GetFileName(d).StartsWith("AutoCAD", StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            catch { }
+            return false;
+        }
+
+        // 애드온이 들어가는 자리
+        public static string AcadPlugins()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                "Autodesk", "ApplicationPlugins");
+        }
+
+        public static string RevitAddins(string ver)
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                "Autodesk", "Revit", "Addins", ver);
+        }
     }
 
     class MainForm : Form
@@ -53,6 +101,12 @@ namespace BSPLauncher
         static readonly string CFG = Path.Combine(CFGDIR, "license.txt");
         static readonly string SENT = Path.Combine(CFGDIR, "sent.txt");   // 이미 보낸 기록 (이름|크기|시각)
 
+        // 애드온(오토캐드 플러그인)이 여기에 떨구면 런처가 서버로 넘긴다
+        //   *.json -> /api/event   (한 줄 사건)
+        //   *.txt  -> /api/logs    (기록 원문)
+        static readonly string OUTBOX = Path.Combine(CFGDIR, "outbox");
+        static readonly string OUTDONE = Path.Combine(CFGDIR, "outbox-sent");
+
         readonly ListBox _list = new ListBox();
         readonly TextBox _key = new TextBox();
         readonly Button _check = new Button();
@@ -64,6 +118,9 @@ namespace BSPLauncher
         readonly NotifyIcon _tray = new NotifyIcon();
         readonly Timer _logTimer = new Timer();
         readonly List<App> _apps = new List<App>();
+        readonly List<string> _revit = Hosts.Revit();
+        readonly bool _acad = Hosts.AutoCad();
+        string _cdn = "";          // apps.json 의 cdn — 비면 스토어에서 바로 받는다
         string _token = "";
         bool _reallyQuit = false;
 
@@ -142,7 +199,7 @@ namespace BSPLauncher
             _tray.ContextMenuStrip = menu;
 
             _logTimer.Interval = 10 * 60 * 1000;   // 10분
-            _logTimer.Tick += (s, e) => SendLogs(false);
+            _logTimer.Tick += (s, e) => { SendLogs(false); LoadApps(); };
             _logTimer.Enabled = true;
 
             Shown += (s, e) => { LoadApps(); SendLogs(false); };
@@ -162,7 +219,11 @@ namespace BSPLauncher
         {
             try
             {
-                string json = Get(STORE + "/apps.json");
+                // /api/apps = 기본 목록 + 판매자가 올린 것 (올리면 바로 보인다)
+                string json;
+                try { json = Get(STORE + "/api/apps"); }
+                catch { json = Get(STORE + "/apps.json"); }
+                _cdn = (Str(json, "cdn") ?? "").TrimEnd('/');
                 _apps.Clear();
                 _list.Items.Clear();
                 foreach (string block in SplitObjects(Cut(json, "\"apps\"")))
@@ -178,16 +239,26 @@ namespace BSPLauncher
                         Released = Str(block, "released"),
                         Sha256 = Str(block, "sha256"),
                         Download = Str(block, "download"),
+                        Publisher = Str(block, "publisher") ?? "",
+                        Host = Str(block, "host") ?? "windows",
+                        Kind = Str(block, "kind") ?? "msi",
                         Size = Num(block, "size")
                     };
                     if (a.Name == null) continue;
                     _apps.Add(a);
+                    string where = a.Host == "revit"
+                        ? (_revit.Count > 0 ? "리빗 " + string.Join(",", _revit.ToArray()) : "리빗 없음")
+                        : a.Host == "autocad" ? (_acad ? "오토캐드" : "오토캐드 없음") : "윈도우";
+                    string pub = string.IsNullOrEmpty(a.Publisher) ? "" : "  · " + a.Publisher;
                     _list.Items.Add(a.Status == "live"
-                        ? string.Format("{0}   v{1}   {2}   ({3:N0} KB)", a.Name, a.Version, a.Target, a.Size / 1024)
-                        : string.Format("{0}   준비중", a.Name));
+                        ? string.Format("{0}{1}   v{2}   [{3}]   ({4:N0} KB)", a.Name, pub, a.Version, where, a.Size / 1024)
+                        : string.Format("{0}{1}   준비중   [{2}]", a.Name, pub, where));
                 }
                 if (_list.Items.Count > 0) _list.SelectedIndex = 0;
-                Say("앱 " + _apps.Count + "개를 읽었습니다.  (" + STORE + ")");
+                Say(string.Format("앱 {0}개 · 이 PC : {1}{2}",
+                    _apps.Count,
+                    _acad ? "오토캐드 " : "",
+                    _revit.Count > 0 ? "리빗 " + string.Join(",", _revit.ToArray()) : (_acad ? "" : "오토데스크 제품 못 찾음")));
             }
             catch (Exception ex)
             {
@@ -229,8 +300,18 @@ namespace BSPLauncher
             if (a.Status != "live") { Say("아직 준비중인 앱입니다.", true); return; }
             if (_token.Length == 0 && !CheckKey()) return;
 
-            string url = a.Download.StartsWith("http") ? a.Download : STORE + a.Download;
-            string tmp = Path.Combine(Path.GetTempPath(), Path.GetFileName(url));
+            // 호스트가 없으면 미리 막는다 — 리빗 애드온은 리빗에, 캐드 것은 캐드에
+            if (a.Host == "revit" && _revit.Count == 0)
+            { Say("이 PC 에 리빗이 없습니다 (Addins 폴더를 못 찾음).", true); return; }
+            if (a.Host == "autocad" && !_acad)
+            { Say("이 PC 에 오토캐드가 없습니다.", true); return; }
+
+            // 받는 곳 : cdn 이 있으면 CDN, 없으면 스토어
+            string baseUrl = a.Download.StartsWith("http") ? "" : (_cdn.Length > 0 ? _cdn : STORE);
+            string url = baseUrl + a.Download;
+            string name = Path.GetFileName(new Uri(url.Contains("?") ? url.Split('?')[0] : url).AbsolutePath);
+            if (name.Length == 0) name = a.Id + (a.Kind == "msi" ? ".msi" : ".zip");
+            string tmp = Path.Combine(Path.GetTempPath(), name);
 
             try
             {
@@ -255,14 +336,38 @@ namespace BSPLauncher
                     return;
                 }
 
-                Say("설치하는 중 …  (오토캐드는 자동으로 닫힙니다)");
-                var p = Process.Start(new ProcessStartInfo("msiexec.exe", "/i \"" + tmp + "\" /qn")
-                { UseShellExecute = true });
-                p.WaitForExit();
-                Say(p.ExitCode == 0
-                    ? "설치 끝났습니다 — " + a.Name + " v" + a.Version
-                    : "설치가 " + p.ExitCode + " 로 끝났습니다.  msi 를 손으로 실행해 보세요 : " + tmp,
-                    p.ExitCode != 0);
+                if (a.Kind == "msi")
+                {
+                    Say("설치하는 중 …  (오토캐드는 자동으로 닫힙니다)");
+                    var p = Process.Start(new ProcessStartInfo("msiexec.exe", "/i \"" + tmp + "\" /qn")
+                    { UseShellExecute = true });
+                    p.WaitForExit();
+                    Say(p.ExitCode == 0
+                        ? "설치 끝났습니다 — " + a.Name + " v" + a.Version
+                        : "설치가 " + p.ExitCode + " 로 끝났습니다.  msi 를 손으로 실행해 보세요 : " + tmp,
+                        p.ExitCode != 0);
+                    Event("install", a.Id, a.Version, p.ExitCode == 0, "msiexec " + p.ExitCode);
+                }
+                else if (a.Kind == "bundle")      // 오토캐드 : ApplicationPlugins 에 푼다
+                {
+                    string dest = Path.Combine(Hosts.AcadPlugins(), a.Id + ".bundle");
+                    Unzip(tmp, dest);
+                    Say("오토캐드에 넣었습니다 — " + dest + "\n오토캐드를 다시 켜면 리본에 뜹니다.");
+                    Event("install", a.Id, a.Version, true, "bundle " + dest);
+                }
+                else                               // 리빗 : 깔린 버전마다 Addins 에 푼다
+                {
+                    int done = 0;
+                    foreach (string ver in _revit)
+                    {
+                        try { Unzip(tmp, Hosts.RevitAddins(ver)); done++; }
+                        catch (Exception ex) { Say("리빗 " + ver + " 에 넣다 실패 : " + ex.Message, true); }
+                    }
+                    Say(done > 0
+                        ? "리빗 " + string.Join(", ", _revit.ToArray()) + " 에 넣었습니다.  리빗을 다시 켜세요."
+                        : "리빗에 넣지 못했습니다.", done == 0);
+                    Event("install", a.Id, a.Version, done > 0, "revit " + string.Join(",", _revit.ToArray()));
+                }
             }
             catch (Exception ex)
             {
@@ -282,9 +387,66 @@ namespace BSPLauncher
             "NOZ_AUTO_*.txt", "NOZ_ERR.txt", "NOZ_IDX.txt", "NOZ_SCAN.txt", "NOZ_VM.txt"
         };
 
+        // 애드온이 outbox 에 떨군 것을 서버로 넘긴다 (런처 = 가운데 라우터)
+        int RouteOutbox()
+        {
+            int n = 0;
+            try
+            {
+                Directory.CreateDirectory(OUTBOX);
+                Directory.CreateDirectory(OUTDONE);
+                foreach (string f in Directory.GetFiles(OUTBOX))
+                {
+                    string ext = Path.GetExtension(f).ToLowerInvariant();
+                    try
+                    {
+                        if (ext == ".json")
+                        {
+                            string raw = File.ReadAllText(f, Encoding.UTF8).Trim();
+                            if (raw.Length == 0) { File.Delete(f); continue; }
+                            // 애드온이 적은 것에 PC 이름과 키를 얹어 보낸다
+                            string wrapped = "{\"events\":[" + (raw.StartsWith("[") ? raw.Substring(1, raw.Length - 2) : raw) + "]," +
+                                             "\"machine\":\"" + Machine() + "\"}";
+                            Post(STORE + "/api/event", wrapped, "application/json");
+                        }
+                        else
+                        {
+                            var fi = new FileInfo(f);
+                            string text = File.ReadAllText(f, Encoding.UTF8);
+                            string body = "{\"machine\":\"" + Machine() + "\",\"key\":\"" + Esc(LoadKey()) +
+                                          "\",\"launcher\":\"1.0\",\"files\":[{\"name\":\"" + Esc(fi.Name) +
+                                          "\",\"mtime\":\"" + fi.LastWriteTimeUtc.ToString("o") +
+                                          "\",\"size\":" + fi.Length + ",\"gz\":\"" + Gzip64(text) + "\"}]}";
+                            Post(STORE + "/api/logs", body, "application/json");
+                        }
+                        string dest = Path.Combine(OUTDONE, DateTime.Now.ToString("yyyyMMdd-HHmmss-") + Path.GetFileName(f));
+                        File.Move(f, dest);
+                        n++;
+                    }
+                    catch { /* 다음 차례에 다시 해 본다 */ }
+                }
+            }
+            catch { }
+            return n;
+        }
+
+        // 사건 한 줄 (내려받기·설치 결과)
+        void Event(string type, string app, string version, bool ok, string note)
+        {
+            try
+            {
+                string body = "{\"type\":\"" + type + "\",\"app\":\"" + Esc(app) + "\",\"version\":\"" + Esc(version) +
+                              "\",\"machine\":\"" + Machine() + "\",\"ok\":" + (ok ? "true" : "false") +
+                              ",\"note\":\"" + Esc(note ?? "") + "\"}";
+                Post(STORE + "/api/event", body, "application/json");
+            }
+            catch { }
+        }
+
         void SendLogs(bool force)
         {
             if (!_logOn.Checked && !force) return;
+            int routed = RouteOutbox();
             try
             {
                 string desk = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
@@ -313,7 +475,12 @@ namespace BSPLauncher
                     }
                 }
 
-                if (n == 0) { LogSay("보낼 새 기록 없음  (" + DateTime.Now.ToString("HH:mm") + ")"); return; }
+                if (n == 0)
+                {
+                    LogSay((routed > 0 ? "애드온 " + routed + "건 넘김 · " : "") +
+                           "보낼 새 기록 없음  (" + DateTime.Now.ToString("HH:mm") + ")");
+                    return;
+                }
 
                 string body = "{\"machine\":\"" + Machine() + "\",\"key\":\"" + Esc(LoadKey()) +
                               "\",\"launcher\":\"1.0\",\"files\":[" + payload + "]}";
@@ -321,7 +488,8 @@ namespace BSPLauncher
                 if (res.Contains("\"ok\":true"))
                 {
                     SaveSent(seen);
-                    LogSay("기록 " + n + "개 (" + (bytes / 1024) + " KB) 보냄  " + DateTime.Now.ToString("HH:mm"));
+                    LogSay((routed > 0 ? "애드온 " + routed + "건 + " : "") +
+                           "기록 " + n + "개 (" + (bytes / 1024) + " KB) 보냄  " + DateTime.Now.ToString("HH:mm"));
                 }
                 else LogSay("기록 보내기 거절됨 : " + res);
             }
@@ -345,6 +513,22 @@ namespace BSPLauncher
                 File.WriteAllLines(SENT, s.Skip(Math.Max(0, s.Count - 500)).ToArray());
             }
             catch { }
+        }
+
+        // zip 을 폴더에 푼다 (있으면 덮어쓴다)
+        static void Unzip(string zip, string dest)
+        {
+            Directory.CreateDirectory(dest);
+            using (var z = System.IO.Compression.ZipFile.OpenRead(zip))
+            {
+                foreach (var e in z.Entries)
+                {
+                    string to = Path.Combine(dest, e.FullName.Replace('/', '\\'));
+                    if (e.Name.Length == 0) { Directory.CreateDirectory(to); continue; }
+                    Directory.CreateDirectory(Path.GetDirectoryName(to));
+                    e.ExtractToFile(to, true);
+                }
+            }
         }
 
         static string Gzip64(string text)

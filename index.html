@@ -109,7 +109,8 @@
       <a href="#apps">앱</a>
       <a href="#how">설치</a>
       <a href="#license">라이선스</a>
-      <a href="#changes">변경내역</a>
+      <a href="/publish.html">판매자</a>
+      <a href="/stats.html">집계</a>
     </nav>
   </div>
 </header>
@@ -225,14 +226,14 @@
 <script>
 const fmt = b => b >= 1048576 ? (b/1048576).toFixed(1)+" MB" : Math.round(b/1024)+" KB";
 
-fetch("/apps.json", {cache:"no-store"}).then(r=>r.json()).then(m=>{
-  document.getElementById("manifest-stamp").textContent = "manifest " + m.updated;
+fetch("/api/apps", {cache:"no-store"}).then(r=>r.json()).then(m=>{
+  document.getElementById("manifest-stamp").textContent = "목록 " + m.updated + " · 저장소 " + (m.store||"-");
   document.getElementById("apps-grid").innerHTML = m.apps.map(a=>`
     <div class="card ${a.status==="live"?"":"soon"}">
       <div class="card-top">
         <div class="icon">${a.icon}</div>
         <div style="flex:1">
-          <h3>${a.name}</h3>
+          <h3>${a.name} <span style="font-size:11px;color:var(--muted);font-weight:500">${a.publisher||""}</span></h3>
           <p class="sub">${a.summary}</p>
         </div>
         <span class="pill ${a.status==="live"?"live":"dev"}">${a.status==="live"?"배포중":"준비중"}</span>
@@ -240,7 +241,7 @@ fetch("/apps.json", {cache:"no-store"}).then(r=>r.json()).then(m=>{
       <div class="meta">
         <div>버전<b>${a.version||"—"}</b></div>
         <div>크기<b>${a.size?fmt(a.size):"—"}</b></div>
-        <div>대상<b>${a.target}</b></div>
+        <div>대상<b>${a.target}${a.host==="revit"?" · 리빗":a.host==="autocad"?" · 캐드":""}</b></div>
         <div>올린 날<b>${a.released||"—"}</b></div>
       </div>
       <div class="card-actions">

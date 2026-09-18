@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BSP Store — 판매자</title>
+<style>
+  :root{--blue:#3080ff;--orange:#fe6e00;--ink:#050505;--panel:#0d0f13;--line:#222834;
+        --text:#e8ecf3;--muted:#9aa4b5;--ok:#22c55e;--warn:#fb2c36;--mono:ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:44px 20px 80px}
+  h1{font-size:22px;margin:0 0 4px;letter-spacing:-.02em} h1 span{color:var(--orange)}
+  .lead{color:var(--muted);font-size:13.5px;margin:0 0 26px}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}
+  label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px;letter-spacing:.04em}
+  label:first-child{margin-top:0}
+  input,select,textarea{width:100%;background:#07090d;border:1px solid var(--line);border-radius:10px;
+        padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:13.5px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  button{margin-top:20px;border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:14px;
+         cursor:pointer;font-family:inherit;background:var(--blue);color:#fff}
+  button:hover{background:#155dfc}
+  .out{margin-top:16px;background:#07090d;border:1px dashed var(--line);border-radius:10px;padding:14px;
+       font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:pre-wrap;word-break:break-all;min-height:20px}
+  .out.ok{color:var(--ok);border-color:rgba(34,197,94,.4)} .out.no{color:var(--warn);border-color:rgba(251,44,54,.4)}
+  .note{color:var(--muted);font-size:13px;line-height:1.75} .note code{font-family:var(--mono);color:#54a2ff}
+  a{color:#54a2ff;font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-size:11.5px}
+  td.m{font-family:var(--mono);font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>BSP</span> 판매자 — 앱 올리기</h1>
+  <p class="lead">올리면 런처와 스토어에 바로 뜹니다 (다시 배포 안 해도 됩니다). <a href="/">← 스토어</a> · <a href="/stats.html">집계</a></p>
+
+  <div class="box">
+    <label for="tok">판매자 토큰</label>
+    <input id="tok" type="password" placeholder="PUBLISHER_TOKEN" autocomplete="off" />
+
+    <div class="row">
+      <div><label for="id">앱 아이디</label><input id="id" placeholder="bsp-iso" /></div>
+      <div><label for="name">이름</label><input id="name" placeholder="BSP.ISO" /></div>
+    </div>
+
+    <label for="summary">한 줄 소개</label>
+    <input id="summary" placeholder="리빗 애드온 — 배관 스풀을 제작도로" />
+
+    <div class="row3">
+      <div><label for="host">호스트</label>
+        <select id="host"><option value="autocad">오토캐드</option><option value="revit">리빗</option><option value="windows">윈도우</option></select></div>
+      <div><label for="kind">설치 방식</label>
+        <select id="kind"><option value="msi">msi (설치 관리자)</option><option value="bundle">bundle (캐드 플러그인 zip)</option><option value="addin">addin (리빗 애드인 zip)</option></select></div>
+      <div><label for="version">버전</label><input id="version" placeholder="1.0.0" /></div>
+    </div>
+
+    <label for="file">설치본 (msi 또는 zip · 4MB 까지)</label>
+    <input id="file" type="file" style="font-family:inherit;padding:9px" />
+
+    <label for="url">— 또는 CDN 주소 (큰 파일은 이쪽)</label>
+    <input id="url" placeholder="https://cdn.example.com/bsp-iso-1.0.0.zip" />
+
+    <button id="go">올리기</button>
+    <div class="out" id="out"></div>
+  </div>
+
+  <div class="box">
+    <h2 style="font-size:14px;margin:0 0 8px;color:var(--muted)">지금 올라와 있는 것</h2>
+    <table id="tbl"><tbody><tr><td class="m">읽는 중…</td></tr></tbody></table>
+  </div>
+
+  <div class="box note">
+    <b style="color:var(--text)">어디에 들어가나</b><br>
+    설치본은 저장소의 <code>downloads/</code>, 목록은 <code>data/published.json</code> 에 들어갑니다.
+    런처와 스토어는 <code>/api/apps</code> 를 보므로 올리는 즉시 반영됩니다.<br><br>
+    <b style="color:var(--text)">설치 방식</b><br>
+    <code>msi</code> 는 <code>msiexec /qn</code>, <code>bundle</code> 은 오토캐드 ApplicationPlugins 에,
+    <code>addin</code> 은 이 PC 에 깔린 리빗 버전마다 Addins 폴더에 풀립니다.
+  </div>
+</div>
+
+<script>
+function b64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(String(r.result).split(",")[1]);
+    r.onerror=rej; r.readAsDataURL(file);
+  });
+}
+
+async function refresh(){
+  try{
+    const d = await (await fetch("/api/apps",{cache:"no-store"})).json();
+    document.querySelector("#tbl tbody").innerHTML = (d.apps||[]).map(a=>`
+      <tr><td>${a.name}</td><td class="m">${a.id}</td><td class="m">${a.version||"-"}</td>
+      <td class="m">${a.host||"-"} / ${a.kind||"-"}</td><td class="m">${a.status}</td></tr>`).join("");
+  }catch(e){}
+}
+refresh();
+
+document.getElementById("go").onclick = async () => {
+  const out=document.getElementById("out");
+  out.className="out"; out.textContent="올리는 중…";
+  const f=document.getElementById("file").files[0];
+  const body={
+    id:id.value.trim(), name:name.value.trim(), summary:summary.value.trim(),
+    host:host.value, kind:kind.value, version:version.value.trim(),
+  };
+  try{
+    if(f){
+      if(f.size>4*1024*1024){ out.className="out no"; out.textContent="4MB 가 넘습니다 — CDN 주소로 올리세요."; return; }
+      body.fileName=f.name; body.fileB64=await b64(f);
+    } else if(url.value.trim()){
+      body.fileUrl=url.value.trim();
+    } else { out.className="out no"; out.textContent="파일이나 CDN 주소가 필요합니다."; return; }
+
+    const r=await fetch("/api/publish",{method:"POST",
+      headers:{"content-type":"application/json","x-publisher-token":tok.value.trim()},
+      body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.ok){
+      out.className="out ok";
+      out.textContent="올렸습니다\n"+JSON.stringify(d.app,null,2);
+      refresh();
+    }else{ out.className="out no"; out.textContent="실패 : "+(d.reason||r.status); }
+  }catch(e){ out.className="out no"; out.textContent="실패 : "+e.message; }
+};
+</script>
+</body>
+</html>

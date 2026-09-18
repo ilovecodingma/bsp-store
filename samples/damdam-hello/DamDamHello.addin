@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Command">
+    <Name>DamDam Hello</Name>
+    <Assembly>DamDamHello.dll</Assembly>
+    <AddInId>7f2a1c64-5b3d-4f0a-9e21-8c4d6b0f1a33</AddInId>
+    <FullClassName>DamDamHello.Command</FullClassName>
+    <Text>DamDam Hello</Text>
+    <Description>리빗에서 알림창 하나 띄우는 맛보기 애드인 (DamDam)</Description>
+    <VendorId>DAMDAM</VendorId>
+    <VendorDescription>DamDam</VendorDescription>
+  </AddIn>
+</RevitAddIns>

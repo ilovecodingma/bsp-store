@@ -1,46 +1,81 @@
 {
   "updated": "2026-09-18",
   "cdn": "",
+  "publishers": [
+    {
+      "id": "bsp",
+      "name": "BSP Engineering",
+      "note": "배관·BIM 설계 자동화"
+    },
+    {
+      "id": "damdam",
+      "name": "DamDam",
+      "note": "맛보기 애드인"
+    }
+  ],
+  "launcher": {
+    "version": "1.2",
+    "file": "/downloads/BSPLauncher.exe",
+    "size": 26112,
+    "sha256": "fd76a8f61798f1dcaf64437de94f741af2ae6a40963b015efe5d2c528f24e911"
+  },
   "apps": [
     {
-      "id": "bsp-solution",
-      "name": "BSP Solution",
+      "id": "hts",
+      "name": "HTS",
+      "publisher": "BSP Engineering",
       "summary": "오토캐드 리본 — 구역 잡기 · 치수 재기 · 자동 제작도",
       "icon": "◧",
       "status": "live",
+      "host": "autocad",
+      "kind": "msi",
       "version": "7.8.3",
       "target": "AutoCAD 2021+ / Win64",
       "released": "2026-09-18",
       "size": 548864,
       "sha256": "d4494631b580cf8397778a08391132862d291d968ed527fbe8a1cf393494e6f6",
-      "download": "/downloads/BSP_Solution_7.8.3.msi",
-      "silent": "msiexec /i \"%FILE%\" /qn"
+      "download": "/api/download?id=hts&v=7.8.3",
+      "file": "/downloads/BSP_Solution_7.8.3.msi"
+    },
+    {
+      "id": "damdam-hello",
+      "name": "DamDam Hello",
+      "publisher": "DamDam",
+      "summary": "리빗에서 알림창 하나 띄우는 맛보기 애드인",
+      "icon": "◈",
+      "status": "live",
+      "host": "revit",
+      "kind": "addin",
+      "revit": [
+        "2024",
+        "2025",
+        "2026",
+        "2027"
+      ],
+      "version": "1.0.0",
+      "target": "Revit 2024+",
+      "released": "2026-09-18",
+      "size": 2706,
+      "sha256": "a676daa2924b3b81f4243d2e97cda66a696661d0cdbf4339fdd1a009f6acacb3",
+      "download": "/api/download?id=damdam-hello&v=1.0.0",
+      "file": "/downloads/DamDam_Hello_1.0.0.zip"
     },
     {
       "id": "noz-pipeline",
       "name": "NOZ Pipeline",
+      "publisher": "BSP Engineering",
       "summary": "IFC 를 넣으면 평면 DXF 와 노즐 데이터가 나옵니다",
-      "icon": "◳",
-      "status": "soon",
-      "version": "",
-      "target": "Windows",
-      "released": "",
-      "size": 0,
-      "sha256": "",
-      "download": ""
-    },
-    {
-      "id": "dwgviz",
-      "name": "DWGViz",
-      "summary": "도면을 요소별로 뜯어 보고 통계로 보여 줍니다",
       "icon": "◫",
       "status": "soon",
+      "host": "windows",
+      "kind": "msi",
       "version": "",
       "target": "Windows",
       "released": "",
       "size": 0,
       "sha256": "",
-      "download": ""
+      "download": "",
+      "file": ""
     }
   ]
 }

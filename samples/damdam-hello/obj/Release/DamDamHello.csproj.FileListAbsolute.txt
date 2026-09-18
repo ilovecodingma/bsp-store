@@ -1,0 +1,10 @@
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\bin\Release\DamDamHello.dll
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\bin\Release\DamDamHello.pdb
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.csproj.AssemblyReference.cache
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.AssemblyInfoInputs.cache
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.AssemblyInfo.cs
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.csproj.CoreCompileInputs.cache
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.sourcelink.json
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.dll
+C:\Users\k\Desktop\bsp-store\samples\damdam-hello\obj\Release\DamDamHello.pdb

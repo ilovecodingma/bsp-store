@@ -4,9 +4,14 @@
     <TargetFramework>net48</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <UseWindowsForms>true</UseWindowsForms>
+    <EnableDefaultItems>true</EnableDefaultItems>
     <AssemblyName>BSPLauncher</AssemblyName>
     <RootNamespace>BSPLauncher</RootNamespace>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
 </Project>
