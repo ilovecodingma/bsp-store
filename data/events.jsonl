@@ -9,3 +9,4 @@
 {"t":"2026-09-18T06:39:19.885Z","type":"license","app":"hts","version":"","machine":"PC-1","org":"BSP 설계2팀","ok":true,"note":"활성화 1/2"}
 {"t":"2026-09-18T06:39:22.097Z","type":"license","app":"hts","version":"","machine":"PC-2","org":"BSP 설계2팀","ok":true,"note":"활성화 2/2"}
 {"t":"2026-09-18T06:39:23.286Z","type":"license","app":"hts","machine":"PC-3","ok":false,"note":"좌석 초과 2/2"}
+{"t":"2026-09-18T06:39:26.613Z","type":"license","app":"hts","machine":"PC-1","ok":true,"note":"자리 반납"}
